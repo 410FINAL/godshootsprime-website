@@ -6,6 +6,7 @@
    hour. An optional "hero" folder, or a file named hero.jpg at the top, sets
    the big front-page photo. Works whether the bucket is public or private; photos are
    served web-sized through /api/img. */
+import crypto from "node:crypto";
 import { siteBucket, send } from "./_lib.js";
 
 const CATEGORIES = ["events", "couples", "fashion", "boudoir"];
@@ -23,6 +24,23 @@ function caption(file) {
     .replace(/^./, ch => ch.toUpperCase());
 }
 
+/* Mixes a category so shots from the same shoot are spread out instead of sitting together.
+   A shoot is the file-name prefix before the frame number (AA1A3300 -> AA1A, _DSC2723 -> _DSC).
+   Each shoot's photos are spaced evenly through the list, nudged by a hash of the file name,
+   so the order looks random but stays the same on every visit and in the full-screen viewer. */
+function mix(keys) {
+  const h = k => crypto.createHash("md5").update(k).digest().readUInt32BE(0) / 2 ** 32;
+  const shoot = k => k.split("/").pop().replace(/\.[^.]+$/, "").replace(/\d+$/, "").toLowerCase();
+  const groups = {};
+  keys.forEach(k => (groups[shoot(k)] = groups[shoot(k)] || []).push(k));
+  const placed = [];
+  Object.values(groups).forEach(g => {
+    g.sort((a, b) => h(a) - h(b));
+    g.forEach((k, i) => placed.push({ k, at: (i + 0.15 + 0.7 * h("pos" + k)) / g.length }));
+  });
+  return placed.sort((a, b) => a.at - b.at).map(x => x.k);
+}
+
 export default async function handler(req, res) {
   try {
     const b = siteBucket();
@@ -38,8 +56,7 @@ export default async function handler(req, res) {
       if (!folders[cat]) continue;
       const { keys } = await b.list(folders[cat]);
       stamp(keys);
-      lists[cat] = keys.map(k => k.key).filter(k => IMAGE.test(k) && !/\/_/.test(k.slice(folders[cat].length)))
-        .sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+      lists[cat] = mix(keys.map(k => k.key).filter(k => IMAGE.test(k) && !/\/_/.test(k.slice(folders[cat].length))));
     }
 
     let heroKey = null;

@@ -152,6 +152,11 @@ section.block { padding-block: clamp(72px, 10vw, 150px); border-top: 1px solid v
   background: linear-gradient(transparent, rgba(0, 0, 0, .7));
   opacity: 0; transition: opacity .4s var(--ease);
 }
+/* Lead photo: each category opens with one large photo, shown whole, above the grid. */
+.cat-hero { display: block; width: 100%; margin-bottom: clamp(28px, 4vw, 48px); transition: opacity .35s var(--ease); }
+.cat-hero .frame { width: min(100%, calc(84vh * var(--r, 1.5))); margin-inline: auto; }
+.cat-hero .frame img { transition: transform 1.4s var(--ease); }
+.cat-hero.fading { opacity: 0; }
 .gallery-foot { display: flex; justify-content: center; margin-top: clamp(28px, 4vw, 48px); }
 
 /* Category index: the work section opens on a vertical list; a category opens its gallery. */
@@ -290,6 +295,7 @@ input[type="date"].text { color-scheme: dark; }
   .bar nav a.navlink:hover { color: var(--white); }
   .tab:hover { color: var(--ink); }
   .tile button:hover canvas, .tile button:hover img { transform: scale(1.03); }
+  .cat-hero:hover img { transform: scale(1.015); }
   .tile button:hover .cap, .tile button:focus-visible .cap { opacity: 1; }
   .lb button:hover { color: var(--white); }
   .chip:hover span { border-color: var(--ink); }
@@ -383,6 +389,7 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
   .cat-intro p { font-size: 15px; }
   .gallery { gap: 6px; margin-inline: calc(var(--gutter) * -1 + 6px); }
   .gallery .col { gap: 6px; }
+  .cat-hero { width: auto; margin: 0 calc(var(--gutter) * -1 + 6px) 20px; }
   .tile .cap { display: none; }
   .cat-row { grid-template-columns: 34px minmax(0, 1fr) 22px; gap: 6px 14px; }
   .cat-row .count { grid-column: 2; grid-row: 3; }
@@ -490,6 +497,7 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
       </div>
       <ol class="cats" id="cats" aria-label="Categories"></ol>
       <div id="cat-view">
+        <button type="button" class="cat-hero" id="cat-hero"><div class="frame" id="cat-hero-frame"></div></button>
         <div class="cat-intro">
           <p id="cat-line"></p>
           <span class="label muted" id="cat-count"></span>
@@ -732,22 +740,25 @@ function study(cat, seed, w, h) {
 }
 
 /* Real photo when it exists, placeholder otherwise. */
-function photo(item, cat, seed, ratio, host, keepRatio) {
+function photo(item, cat, seed, ratio, host, keepRatio, eager) {
   var ph = study(cat, seed, ratio[0], ratio[1]);
   ph.setAttribute("role", "img");
   ph.setAttribute("aria-label", (item.caption || GALLERIES[cat].title) + " (placeholder)");
-  if (!keepRatio) host.style.aspectRatio = ratio[0] + " / " + ratio[1];
+  if (!keepRatio) { host.style.aspectRatio = ratio[0] + " / " + ratio[1]; host.style.setProperty("--r", ratio[0] / ratio[1]); }
   host.replaceChildren(ph);
   if (!item.src) return;
   var img = new Image();
   img.alt = item.caption || GALLERIES[cat].title;
   img.decoding = "async";
   img.onload = function () {
-    if (!keepRatio) host.style.aspectRatio = img.naturalWidth + " / " + img.naturalHeight;
+    if (!keepRatio) {
+      host.style.aspectRatio = img.naturalWidth + " / " + img.naturalHeight;
+      host.style.setProperty("--r", img.naturalWidth / img.naturalHeight);
+    }
     if (ph.parentNode === host) host.replaceChild(img, ph);
   };
-  /* Gallery tiles load as they come near the screen; the hero and the viewer load at once. */
-  if (keepRatio || !lazyIo) img.src = item.src;
+  /* Gallery tiles load as they come near the screen; the heroes and the viewer load at once. */
+  if (keepRatio || eager || !lazyIo) img.src = item.src;
   else { host._load = function () { img.src = item.src; }; lazyIo.observe(host); }
 }
 var lazyIo = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
@@ -798,7 +809,15 @@ function fillGallery(k) {
   }
   gal.replaceChildren.apply(gal, cols);
   gal.dataset.cols = n;
+  /* The first photo leads the category, large; the viewer opens on it as photo 01. */
+  var lead = g.photos[0];
+  $("cat-hero").hidden = !lead;
+  if (lead) {
+    photo({ src: lead.full || lead.src, caption: lead.caption }, k, 0, [3, 2], $("cat-hero-frame"), false, true);
+    $("cat-hero").setAttribute("aria-label", "View " + (lead.caption || "photograph"));
+  }
   g.photos.forEach(function (p, i) {
+    if (i === 0) return;
     var fig = document.createElement("figure"); fig.className = "tile";
     var b = document.createElement("button"); b.type = "button";
     b.setAttribute("aria-label", "View " + (p.caption || "photograph"));
@@ -830,8 +849,9 @@ function showCat(k, animate) {
   });
   var gal = $("gallery");
   if (!animate || matchMedia("(prefers-reduced-motion: reduce)").matches) { fillGallery(k); return; }
-  gal.classList.add("fading");
-  setTimeout(function () { fillGallery(k); gal.classList.remove("fading"); }, 300);
+  var lead = $("cat-hero");
+  gal.classList.add("fading"); lead.classList.add("fading");
+  setTimeout(function () { fillGallery(k); gal.classList.remove("fading"); lead.classList.remove("fading"); }, 300);
 }
 showCat("fashion", false);
 
@@ -861,6 +881,7 @@ function closeCats() {
   work.classList.add("listing");
   work.scrollIntoView();
 }
+$("cat-hero").addEventListener("click", function () { openLb(current, 0); });
 $("cat-back").addEventListener("click", function () {
   if (history.state && history.state.cat) history.back(); else closeCats();
 });

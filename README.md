@@ -60,7 +60,7 @@ Nothing secret ever goes in the pages. The Backblaze keys and your admin passwor
 ### 1. Backblaze (B2 Cloud Storage, not Personal Backup)
 
 Two private buckets:
-- **Website bucket** (e.g. `godshootsprime-site`): top-level folders `events`, `couples`, `fashion`, `boudoir`. Photos you drop in show up on the site within about an hour, in file-name order (start names with `01-`, `02-` to set the order). A name like `03-golden-hour.jpg` becomes the caption "Golden hour"; camera names like `IMG_1234.jpg` get no caption. Put `hero.jpg` at the top of the bucket for the front-page photo.
+- **Website bucket** (e.g. `godshootsprime-site`): top-level folders `events`, `couples`, `fashion`, `boudoir`. Photos you drop in show up on the site within about an hour, mixed so shots from the same shoot are spread out (the order stays the same on every visit). A name like `03-golden-hour.jpg` becomes the caption "Golden hour"; camera names like `IMG_1234.jpg` get no caption. The front-page photo is `HERO_FILE` in `api/portfolio.js`, and the large photo that opens each category is `CATEGORY_HEROES` in the same file (a file name per category; empty uses the first photo of the mix).
 - **Portal bucket** (e.g. `godshootsprime-portal`): leave it empty. The site fills it with client folders, photos, contracts and messages.
 
 Then **Application Keys → Add a New Application Key**, twice:

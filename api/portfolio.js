@@ -13,6 +13,10 @@ const CATEGORIES = ["events", "couples", "fashion", "boudoir"];
 /* The front-page photo. Set to a file in the bucket (e.g. "fashion/IMG_4821.jpg", or just the
    file name) to choose it; capitals don't matter. Empty means hero.jpg or the hero folder below. */
 const HERO_FILE = "fashion/DF8A2626.jpg";
+/* Each category's gallery opens with one big photo above the rest. Put a file name here to choose
+   it (e.g. fashion: "DF8A2626.jpg"); capitals don't matter. Empty means the first photo of the
+   mixed order, skipping the front-page photo. */
+const CATEGORY_HEROES = { fashion: "", events: "", couples: "", boudoir: "" };
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i;
 /* Camera-style names (IMG_1234, DSC_0412) make poor captions, so those get none. */
 const CAMERA = /^((img|dsc|dscf|dscn|_mg|_dsc|gsp|pxl|photo)?[-_ ]?\d+|[a-z0-9_]{4}\d{4})$/i;
@@ -72,6 +76,15 @@ export default async function handler(req, res) {
       const { keys } = await b.list(folders.hero);
       stamp(keys);
       heroKey = keys.map(k => k.key).filter(k => IMAGE.test(k)).sort()[0] || null;
+    }
+
+    /* The chosen lead photo goes first in its category; the page shows it large above the others. */
+    for (const cat of Object.keys(lists)) {
+      const want = (CATEGORY_HEROES[cat] || "").trim().toLowerCase().replace(/^\/+/, "");
+      const list = lists[cat];
+      const lead = (want && (list.find(k => k.toLowerCase() === want) || list.find(k => k.toLowerCase().endsWith("/" + want))))
+        || list.find(k => k !== heroKey) || list[0];
+      if (lead) lists[cat] = [lead, ...list.filter(k => k !== lead)];
     }
 
     /* Photos are served through /api/img, which shrinks the full-size originals to web size. */

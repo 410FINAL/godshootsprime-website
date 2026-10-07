@@ -317,8 +317,18 @@ input[type="date"].text { color-scheme: dark; }
   font: 400 clamp(34px, 5.4vw, 76px)/1.08 var(--display); letter-spacing: -.015em;
 }
 .intro blockquote em { font-style: italic; }
-.intro .w { display: inline-block; opacity: 0; transform: translateY(.35em); filter: blur(6px); animation: word .9s var(--ease) forwards; }
-@keyframes word { to { opacity: 1; transform: none; filter: none; } }
+/* Typewriter: the whole quote is laid out hidden, then each letter appears in turn, so lines never jump.
+   The cursor sits after the newest letter; it holds steady while typing and blinks when it pauses. */
+.intro .ch { position: relative; color: transparent; }
+.intro .ch.on { color: inherit; }
+.intro .ch.at::after, .intro .ch.pre::before {
+  content: ""; position: absolute; top: .14em; bottom: .04em; width: 2px; background: var(--white);
+  animation: blink 1.05s steps(1) infinite;
+}
+.intro .ch.at::after { right: -.08em; }
+.intro .ch.pre::before { left: -.1em; }
+.intro.typing .ch.at::after { animation: none; }
+@keyframes blink { 50% { opacity: 0; } }
 .intro .rule { width: 56px; height: 1px; background: var(--grey); transform: scaleX(0); animation: draw .8s var(--ease) forwards; }
 @keyframes draw { to { transform: scaleX(1); } }
 .intro figcaption { opacity: 0; animation: fade .8s var(--ease) forwards; color: var(--grey); }
@@ -440,7 +450,9 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .intro .w, .intro figcaption { opacity: 1; transform: none; filter: none; }
+  .intro .ch { color: inherit; }
+  .intro figcaption { opacity: 1; }
+  .intro .ch.at::after, .intro .ch.pre::before { display: none; }
   .intro .rule { transform: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -1211,21 +1223,42 @@ function finishIntro(instant) {
   if (seen || location.hash === "#inquire") { finishIntro(true); return; }
   document.body.classList.add("opening");
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var words = INTRO.quote.split(" "), q = $("intro-quote"), t = 0.35;
-  words.forEach(function (w, i) {
-    var sp = document.createElement("span"); sp.className = "w";
-    var italic = /\*/.test(w);
-    w = w.replace(/\*/g, "");
-    if (italic) { var em = document.createElement("em"); em.textContent = w; sp.appendChild(em); } else sp.textContent = w;
-    sp.style.animationDelay = (t + i * 0.13) + "s";
-    q.appendChild(sp);
-    if (i < words.length - 1) q.appendChild(document.createTextNode(" "));
+  /* Each letter gets its own hidden span; *asterisks* mark italic words. */
+  var q = $("intro-quote"), chars = [], italic = false, host = q;
+  INTRO.quote.split("").forEach(function (c) {
+    if (c === "*") {
+      italic = !italic;
+      if (italic) { host = document.createElement("em"); q.appendChild(host); } else host = q;
+      return;
+    }
+    var sp = document.createElement("span"); sp.className = "ch"; sp.textContent = c;
+    host.appendChild(sp); chars.push(sp);
   });
-  var end = t + words.length * 0.13 + 0.5;
+  /* Typing rhythm: a slightly uneven beat like a real hand, with a breath after punctuation. */
+  var start = 0.7, at = start, times = chars.map(function (sp, i) {
+    var prev = i ? chars[i - 1].textContent : "";
+    at += i === 0 ? 0 : 0.035 + Math.random() * 0.04 + (/[,.;:!?]/.test(prev) ? 0.28 : 0) + (prev === " " ? 0.03 : 0);
+    return at;
+  });
+  var end = (times[times.length - 1] || start) + 0.45;
+  if (reduce) chars.forEach(function (sp) { sp.classList.add("on"); });
+  else {
+    if (chars[0]) chars[0].classList.add("pre");
+    intro.classList.add("typing");
+    chars.forEach(function (sp, i) {
+      setTimeout(function () {
+        if (introDone) return;
+        if (i === 0) sp.classList.remove("pre");
+        if (i) chars[i - 1].classList.remove("at");
+        sp.classList.add("on", "at");
+        if (i === chars.length - 1) intro.classList.remove("typing");
+      }, times[i] * 1000);
+    });
+  }
   $("intro-rule").style.animationDelay = end + "s";
   $("intro-by").style.animationDelay = (end + 0.25) + "s";
   $("intro-by").textContent = INTRO.by;
-  setTimeout(function () { finishIntro(false); }, reduce ? 2600 : (end + 2.1) * 1000);
+  setTimeout(function () { finishIntro(false); }, reduce ? 2600 : (end + 2) * 1000);
   intro.addEventListener("click", function () { finishIntro(false); });
   addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) finishIntro(false); });
 })();

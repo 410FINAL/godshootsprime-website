@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gallery Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&display=swap">
+<style>
+/* Admin portal: the photographer's back room. Folder list, then one folder per client with details, limits, sharing, photos and wording. */
+:root {
+  --black: #000000;
+  --ink: #f4f4f4;
+  --grey: #8e8e8e;
+  --dim: #5c5c5c;
+  --line: #222222;
+  --lift: #0d0d0d;
+  --white: #ffffff;
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(16px, 5vw, 72px);
+  --ease: cubic-bezier(.22, .61, .2, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; -webkit-tap-highlight-color: transparent;
+  background: var(--black); color: var(--ink);
+  font: 300 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+:focus-visible { outline: 1px solid var(--white); outline-offset: 4px; }
+::selection { background: var(--white); color: var(--black); }
+
+.label { font: 500 11px/1.2 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase; }
+.muted { color: var(--grey); }
+.wrap { padding-inline: var(--gutter); max-width: 1200px; margin-inline: auto; }
+h1, h2 { font-weight: 400; font-family: var(--display); letter-spacing: -.015em; margin: 0; }
+h1 em, h2 em { font-style: italic; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; padding: 0 24px; border: 1px solid var(--ink);
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  transition: background .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), transform .2s;
+  white-space: nowrap;
+}
+.btn.solid { background: var(--white); color: var(--black); border-color: var(--white); }
+.btn.quiet { border-color: var(--dim); color: var(--grey); }
+.btn.small { min-height: 38px; padding: 0 16px; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+.btn:active:not([disabled]) { transform: scale(.97); }
+.link {
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  padding-bottom: 6px; border-bottom: 1px solid var(--dim); transition: border-color .3s, color .3s;
+}
+.link.danger { color: var(--grey); }
+
+/* Bar */
+.bar {
+  position: sticky; top: 0; z-index: 40;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(0, 0, 0, .86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+.mark { font: 500 12px/1 var(--sans); font-stretch: 125%; letter-spacing: .38em; white-space: nowrap; }
+.mark small { color: var(--dim); letter-spacing: .24em; margin-left: 10px; font-size: 10px; }
+.bar .right { display: flex; align-items: center; gap: 24px; }
+.saved { color: var(--dim); transition: color .3s; }
+.saved.on { color: var(--white); }
+
+/* Fields */
+.field { display: grid; gap: 8px; min-width: 0; }
+.field > span { color: var(--grey); }
+.field small { color: var(--dim); font-size: 13px; line-height: 1.5; }
+.text {
+  width: 100%; min-width: 0; background: transparent; color: var(--white);
+  border: 0; border-bottom: 1px solid var(--dim); border-radius: 0;
+  padding: 8px 0 10px; font: 300 18px/1.4 var(--sans);
+  transition: border-color .25s;
+}
+.text::placeholder { color: var(--dim); }
+.text:focus { outline: none; border-color: var(--white); }
+textarea.text { resize: vertical; min-height: 72px; font-size: 16px; line-height: 1.6; }
+input[type="date"].text { color-scheme: dark; }
+.text.num { max-width: 140px; font: 400 28px/1.2 var(--display); }
+.inline { display: flex; gap: 12px; align-items: end; }
+.inline .text { flex: 1; }
+.error { color: var(--white); font-size: 14px; min-height: 1.4em; margin: 0; }
+.error:not(:empty)::before { content: "— "; color: var(--grey); }
+
+/* Switch */
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 20px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch i {
+  flex: none; position: relative; width: 48px; height: 26px; border: 1px solid var(--dim); transition: background .25s, border-color .25s;
+}
+.switch i::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--grey);
+  transition: transform .3s var(--ease), background .25s;
+}
+.switch input:checked + i { background: var(--white); border-color: var(--white); }
+.switch input:checked + i::after { transform: translateX(22px); background: var(--black); }
+.switch input:focus-visible + i { outline: 1px solid var(--white); outline-offset: 3px; }
+.switch b { font-weight: 400; font-size: 17px; }
+.switch small { display: block; color: var(--grey); font-size: 14px; }
+
+/* Gate */
+.gate { min-height: calc(100svh - 65px); display: grid; place-items: center; padding: 48px var(--gutter); }
+.gate form { width: 100%; max-width: 420px; display: grid; gap: 30px; animation: rise .6s var(--ease); }
+.gate h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1; }
+.gate p { margin: 0; color: var(--grey); }
+@keyframes rise { from { transform: translateY(12px); opacity: .001; } to { transform: none; opacity: 1; } }
+.shake { animation: shake .4s var(--ease); }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+/* Pages */
+.page { padding-block: clamp(36px, 6vw, 72px) 120px; animation: rise .5s var(--ease); }
+.page-head { display: flex; justify-content: space-between; align-items: end; gap: 20px 32px; flex-wrap: wrap; margin-bottom: 28px; }
+.page-head h1 { font-size: clamp(40px, 5.6vw, 72px); line-height: 1; }
+.page-head .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.crumb { display: inline-block; margin-bottom: 18px; color: var(--grey); }
+.tabs { display: flex; gap: clamp(18px, 3vw, 40px); border-bottom: 1px solid var(--line); margin-bottom: 32px; overflow-x: auto; scrollbar-width: none; }
+.tab {
+  position: relative; padding-bottom: 14px; color: var(--grey); flex: none;
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+}
+.tab sup { font-size: 9px; margin-left: 6px; color: var(--dim); vertical-align: top; }
+.tab::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--white); transform: scaleX(0); transform-origin: left; transition: transform .4s var(--ease); }
+.tab[aria-selected="true"] { color: var(--white); }
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+/* Folder list */
+.newrow { display: flex; gap: 12px; align-items: end; border: 1px solid var(--line); background: var(--lift); padding: 20px 22px; margin-bottom: 24px; }
+.newrow .text { flex: 1; }
+.folders { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.folder {
+  display: grid; grid-template-columns: 72px 1fr auto; gap: 20px; align-items: center;
+  background: var(--black); padding: 16px 20px; text-align: left; width: 100%;
+  transition: background .25s;
+}
+.folder .cover { width: 72px; height: 72px; background: var(--lift); overflow: hidden; }
+.folder .cover canvas, .folder .cover img { width: 100%; height: 100%; object-fit: cover; }
+.folder h3 { margin: 0 0 4px; font: 400 26px/1.1 var(--display); }
+.folder .info { color: var(--grey); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.folder .go { color: var(--dim); }
+.tag { display: inline-block; border: 1px solid var(--dim); color: var(--ink); padding: 3px 8px; font-size: 10px; letter-spacing: .16em; }
+.empty { color: var(--grey); padding: 28px 0; }
+
+/* Folder editor */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--line); background: var(--lift); padding: 24px; display: grid; gap: 22px; align-content: start; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.card h2 { font-size: 28px; line-height: 1.1; }
+.card .sub { margin: -14px 0 0; color: var(--grey); font-size: 14px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 20px; }
+.status { color: var(--grey); font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 16px; }
+.status b { color: var(--white); font-weight: 400; }
+.sharebox { display: flex; gap: 10px; align-items: center; border: 1px solid var(--dim); padding: 6px 6px 6px 14px; }
+.sharebox input { flex: 1; min-width: 0; background: none; border: 0; color: var(--white); font: 300 14px/1.4 var(--sans); }
+.sharebox input:focus { outline: none; }
+
+/* Photos */
+.drop {
+  display: grid; place-items: center; gap: 10px; text-align: center; padding: 34px 20px;
+  border: 1px dashed var(--dim); color: var(--grey); cursor: pointer; transition: border-color .25s, background .25s;
+}
+.drop.over { border-color: var(--white); background: #111; color: var(--white); }
+.drop b { font: 400 24px/1.2 var(--display); color: var(--ink); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.thumb { position: relative; margin: 0; display: grid; gap: 6px; }
+.thumb .ph { aspect-ratio: 1; background: var(--black); overflow: hidden; }
+.thumb .ph canvas, .thumb .ph img { width: 100%; height: 100%; object-fit: cover; }
+.thumb figcaption { font-size: 12px; color: var(--grey); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumb .x {
+  position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; display: grid; place-items: center;
+  background: rgba(0, 0, 0, .7); border: 1px solid var(--dim); font-size: 16px; line-height: 1; color: var(--white);
+}
+.thumb.picked .ph { outline: 1px solid var(--white); outline-offset: -1px; }
+.thumb .mark-on { position: absolute; top: 6px; left: 6px; background: var(--white); color: var(--black); padding: 3px 7px; font-size: 9px; letter-spacing: .16em; }
+.photohead { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.photohead .tabs { margin: 0; border: 0; }
+.bar-progress { height: 1px; background: var(--line); }
+.bar-progress i { display: block; height: 100%; width: 0; background: var(--white); transition: width .3s; }
+
+.picklist { margin: 0; padding: 0; list-style: none; columns: 3 140px; column-gap: 20px; font-size: 14px; }
+.picklist li { padding: 3px 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
+
+.hint { color: var(--dim); font-size: 13px; margin: -8px 0 0; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 90;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--white); color: var(--black); padding: 14px 22px; max-width: calc(100% - 32px);
+  transition: opacity .3s var(--ease), transform .3s var(--ease);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Messages and contracts */
+.chat { display: grid; gap: 12px; max-height: 460px; overflow-y: auto; padding: 4px 2px 8px; }
+.msg { max-width: min(78%, 520px); padding: 12px 16px; border: 1px solid var(--line); background: var(--black); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; }
+.msg.me { justify-self: end; background: var(--white); color: var(--black); border-color: var(--white); }
+.msg small { display: block; margin-top: 6px; font-size: 11px; letter-spacing: .06em; color: var(--grey); }
+.msg.me small { color: #555555; }
+.composer { display: flex; gap: 12px; align-items: end; border-top: 1px solid var(--line); padding-top: 16px; }
+.composer textarea { flex: 1; min-height: 48px; max-height: 200px; resize: none; }
+.kdoc { border: 1px solid var(--line); background: var(--black); }
+.kdoc-head { display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding: 16px 18px; }
+.kdoc-head b { font: 400 22px/1.2 var(--display); }
+.kdoc-head small { display: block; color: var(--grey); font-size: 13px; }
+.kdoc details { border-top: 1px solid var(--line); }
+.kdoc summary { cursor: pointer; padding: 12px 18px; color: var(--grey); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+.kdoc pre { margin: 0; padding: 0 18px 18px; white-space: pre-wrap; font: 300 14px/1.7 var(--sans); color: #cfcfcf; }
+.kdoc .sig { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 0 18px 18px; color: var(--grey); font-size: 14px; }
+.kdoc .sig img { height: 56px; width: auto; filter: invert(1); mix-blend-mode: screen; }
+.state { padding: 4px 10px; border: 1px solid var(--dim); font-size: 10px; }
+.state.done { background: var(--white); color: var(--black); border-color: var(--white); }
+.inbox { display: inline-flex; align-items: center; gap: 8px; color: var(--white); }
+.inbox::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--white); }
+.tag.hot { background: var(--white); color: var(--black); border-color: var(--white); }
+
+.preview-note { border: 1px solid var(--line); color: var(--grey); padding: 14px 18px; font-size: 14px; margin-bottom: 28px; }
+.preview-note b { color: var(--ink); font-weight: 400; }
+
+@media (hover: hover) {
+  .btn:not([disabled]):hover { background: var(--white); color: var(--black); border-color: var(--white); }
+  .btn.solid:not([disabled]):hover { background: transparent; color: var(--white); }
+  .link:hover { border-color: var(--white); color: var(--white); }
+  .folder:hover { background: #080808; }
+  .folder:hover .go, .tab:hover, .crumb:hover { color: var(--white); }
+  .drop:hover { border-color: var(--grey); }
+  .thumb .x:hover { background: var(--white); color: var(--black); }
+}
+@media (max-width: 760px) {
+  .bar .wrap { height: 56px; }
+  .mark small { display: none; }
+  .cards, .two { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: 20px 18px; }
+  .folder { grid-template-columns: 56px 1fr; gap: 14px; padding: 14px; }
+  .folder .cover { width: 56px; height: 56px; }
+  .folder .go { display: none; }
+  .folder h3 { font-size: 22px; }
+  .page-head .actions { width: 100%; }
+  .page-head .actions .btn { flex: 1; }
+  .thumbs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .newrow { flex-direction: column; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="#">GODSHOOTSPRIME<small>Admin</small></a>
+    <div class="right">
+      <a class="label inbox" id="inbox" href="#" hidden></a>
+      <span class="label saved" id="saved" aria-live="polite"></span>
+      <button class="label muted" type="button" id="sign-out" hidden>Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="gate" id="gate" hidden>
+  <form id="gate-form" novalidate>
+    <div style="display:grid;gap:16px">
+      <span class="label muted">Gallery admin</span>
+      <h1 id="gate-title"></h1>
+      <p id="gate-line"></p>
+    </div>
+    <label class="field">
+      <span class="label">Admin password</span>
+      <input class="text" id="pw" type="password" autocomplete="current-password">
+    </label>
+    <label class="field" id="pw2-row" hidden>
+      <span class="label">Type it again</span>
+      <input class="text" id="pw2" type="password" autocomplete="new-password">
+    </label>
+    <p class="error" id="gate-error" role="alert"></p>
+    <button class="btn solid" type="submit" id="gate-btn"></button>
+  </form>
+</main>
+
+<main id="app" hidden></main>
+
+<div class="toast label" id="toast" role="status"></div>
+
+<script src="gallery-store.js"></script>
+<script>
+var S = null, folderTab = "proofs";
+
+function $(id) { return document.getElementById(id); }
+var esc = GS.esc;
+function ss(key, val) {
+  try {
+    if (val === undefined) return sessionStorage.getItem(key);
+    if (val === null) sessionStorage.removeItem(key); else sessionStorage.setItem(key, val);
+  } catch (e) { return null; }
+}
+function fmtDate(t) { return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+function toInt(v) { var n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); return isNaN(n) ? 0 : n; }
+function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+
+var toastTimer;
+function toast(msg) {
+  var t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+}
+var savedTimer;
+function flashSaved() {
+  var s = $("saved");
+  s.textContent = "Saved"; s.classList.add("on");
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(function () { s.classList.remove("on"); }, 1200);
+}
+function copy(text, input) {
+  var done = function () { toast("Copied"); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+  } else fallback();
+  function fallback() {
+    if (input) { input.focus(); input.select(); }
+    try { document.execCommand("copy") ? done() : toast("Press Ctrl+C or Cmd+C to copy"); } catch (e) { toast("Press Ctrl+C or Cmd+C to copy"); }
+  }
+}
+function randomPassword() {
+  var words = ["silver", "linen", "shadow", "velvet", "ivory", "noir", "frame", "glass", "studio", "light", "grain", "matte"];
+  var a = new Uint32Array(3); crypto.getRandomValues(a);
+  return words[a[0] % words.length] + "-" + words[a[1] % words.length] + "-" + (100 + a[2] % 900);
+}
+function randomToken() {
+  var a = new Uint8Array(12); crypto.getRandomValues(a);
+  return Array.from(a).map(function (x) { return (x % 36).toString(36); }).join("");
+}
+function shareUrl(c) { return new URL("client.html?g=" + c.shareToken, location.href).href; }
+
+/* ---------- Sign in ---------- */
+var firstRun = false;
+function showGate() {
+  firstRun = !S.adminHash;
+  $("gate-title").innerHTML = firstRun ? "Set your <em>password.</em>" : "Welcome <em>back.</em>";
+  $("gate-line").textContent = firstRun
+    ? "Choose the password you'll use to manage client galleries. At least 8 characters."
+    : "Sign in to manage your client galleries.";
+  $("pw2-row").hidden = !firstRun;
+  $("pw").autocomplete = firstRun ? "new-password" : "current-password";
+  $("gate-btn").textContent = firstRun ? "Create and sign in" : "Sign in";
+  $("gate").hidden = false; $("app").hidden = true; $("sign-out").hidden = true;
+  $("pw").focus();
+}
+function gateError(msg) {
+  $("gate-error").textContent = msg;
+  var f = $("gate-form"); f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake");
+}
+$("gate-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var pw = $("pw").value;
+  if (firstRun) {
+    if (pw.length < 8) return gateError("Use at least 8 characters.");
+    if (pw !== $("pw2").value) return gateError("The two passwords don't match.");
+    GS.hash(pw).then(function (h) { S.adminHash = h; return GS.saveSettings(S); }).then(enter);
+    return;
+  }
+  GS.adminLogin(pw).then(enter, function (e) { gateError(e.message); });
+});
+$("gate-form").addEventListener("input", function () { $("gate-error").textContent = ""; });
+function enter() {
+  ss("gsp-admin", "1");
+  $("pw").value = ""; $("pw2").value = "";
+  $("gate").hidden = true; $("app").hidden = false; $("sign-out").hidden = false;
+  /* Signed in, so the full settings (contract template included) are available now. */
+  GS.getSettings().then(function (s) { S = s; }).then(checkActivity).then(route, route);
+}
+$("sign-out").addEventListener("click", function () { ss("gsp-admin", null); GS.signOut(); $("inbox").hidden = true; location.hash = ""; showGate(); });
+GS.onSignedOut = function () { ss("gsp-admin", null); GS.signOut(); showGate(); };
+
+/* ---------- Routing: #  = folders, #settings, #<client id> ---------- */
+addEventListener("hashchange", function () { if (ss("gsp-admin")) route(); });
+function route() {
+  var h = decodeURIComponent(location.hash.slice(1));
+  openFolder = null;
+  scrollTo(0, 0);
+  if (h === "settings") return renderSettings();
+  if (h) return GS.getClient(h).then(function (c) { c ? renderFolder(c) : (location.hash = ""); });
+  renderHome();
+}
+
+function pageTabs(active) {
+  return '<div class="tabs" role="tablist">' +
+    '<a class="tab" role="tab" href="#" aria-selected="' + (active === "home") + '">Client folders</a>' +
+    '<a class="tab" role="tab" href="#settings" aria-selected="' + (active === "settings") + '">Site text &amp; settings</a></div>';
+}
+var PREVIEW_NOTE = '<p class="preview-note"><b>Preview mode.</b> Folders and photos are saved in this browser only, so clients on other devices won\'t see them yet. This switches to online storage once hosting is set up.</p>';
+
+/* ---------- Home: folder list ---------- */
+function renderHome() {
+  var app = $("app");
+  app.innerHTML = '<div class="wrap page">' +
+    '<div class="page-head"><h1>Client <em>folders</em></h1><div class="actions"><button class="btn solid" type="button" id="new-btn">New folder</button></div></div>' +
+    PREVIEW_NOTE + pageTabs("home") +
+    '<form class="newrow" id="new-row" hidden><label class="field" style="flex:1"><span class="label">Client or event name</span>' +
+    '<input class="text" id="new-name" placeholder="e.g. Sofia & Marc, or the Ashford Gala" autocomplete="off"></label>' +
+    '<button class="btn solid" type="submit">Create folder</button></form>' +
+    '<div class="folders" id="folders"></div></div>';
+  $("new-btn").addEventListener("click", function () { $("new-row").hidden = false; $("new-name").focus(); });
+  $("new-row").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var n = $("new-name").value.trim();
+    if (!n) { $("new-name").focus(); return; }
+    GS.newClient(n).then(function (c) {
+      c.password = randomPassword();
+      return GS.saveClient(c).then(function () { location.hash = c.id; });
+    });
+  });
+
+  GS.listClients().then(function (list) {
+    var box = $("folders");
+    if (!list.length) { box.outerHTML = '<p class="empty">No folders yet. Create one for each client or event.</p>'; return; }
+    list.forEach(function (c) {
+      var b = document.createElement("a");
+      b.className = "folder"; b.href = "#" + encodeURIComponent(c.id);
+      b.innerHTML = '<div class="cover"></div><div><h3>' + esc(c.name) + '</h3><div class="info" data-info></div></div><span class="label go">Open</span>';
+      box.appendChild(b);
+      GS.listPhotos(c.id).then(function (ps) {
+        var count = function (s) { return ps.filter(function (p) { return p.section === s; }).length; };
+        var cover = ps.filter(function (p) { return p.section === "finals"; })[0] || ps[0];
+        var cv = b.querySelector(".cover");
+        if (cover) {
+          var u = GS.photoUrl(cover);
+          if (u) { var im = new Image(); im.src = u; im.alt = ""; cv.appendChild(im); } else cv.appendChild(GS.placeholder(cover.name, 160));
+        }
+        var w = GS.window(c, S), info = [];
+        info.push([c.shoot, c.date && fmtDate(c.date + "T12:00")].filter(Boolean).join(" · ") || "No details yet");
+        info.push(count("proofs") + " proofs · " + count("finals") + " finals · " + count("downloads") + " downloads");
+        if (c.selection) info.push('<span class="tag">Selection in · ' + c.selection.frames.length + '</span>');
+        if (w.off) info.push("Timer off");
+        else if (w.started) info.push(w.open ? w.left + " days left" : "Downloads closed");
+        else info.push("Not opened yet");
+        if (c.shareToken) info.push('<span class="tag">Share link on</span>');
+        var un = (activity.unread[c.id] || 0);
+        if (un) info.unshift('<span class="tag hot">' + plural(un, "new message") + '</span>');
+        var ks = activity.contracts[c.id];
+        if (ks) info.push('<span class="tag">' + (ks.signed === ks.total ? "Contract signed" : "Contract awaiting signature") + "</span>");
+        b.querySelector("[data-info]").innerHTML = info.map(function (x) { return x.indexOf("<span") === 0 ? x : "<span>" + esc(x) + "</span>"; }).join("");
+      });
+    });
+  });
+}
+
+/* ---------- Folder ---------- */
+function renderFolder(c) {
+  var app = $("app");
+  var saveT;
+  function persist() { clearTimeout(saveT); saveT = setTimeout(function () { GS.saveClient(c).then(flashSaved); }, 350); }
+
+  app.innerHTML = '<div class="wrap page">' +
+    '<a class="crumb label" href="#">← All folders</a>' +
+    '<div class="page-head"><h1 id="f-title"></h1><div class="actions">' +
+      '<a class="btn" href="client.html?view=' + encodeURIComponent(c.id) + '">View as client</a></div></div>' +
+    '<div class="cards">' +
+
+    /* Details */
+    '<section class="card"><h2>Details</h2>' +
+      '<div class="two">' +
+        field("name", "Client or event name", c.name) +
+        field("shoot", "Shoot type", c.shoot, 'placeholder="e.g. Wedding"') +
+        field("location", "Location", c.location, 'placeholder="e.g. Malibu"') +
+        field("date", "Shoot date", c.date, 'type="date"') +
+      '</div>' +
+      '<label class="field"><span class="label">Client password</span>' +
+        '<div class="inline"><input class="text" data-k="password" value="' + esc(c.password) + '" autocomplete="off" spellcheck="false">' +
+        '<button class="btn small quiet" type="button" id="gen-pw">New</button>' +
+        '<button class="btn small" type="button" id="copy-pw">Copy</button></div>' +
+        '<small>Each folder needs its own password. Send it to your client with the gallery link.</small></label>' +
+      '<p class="error" id="pw-err"></p>' +
+      '<label class="field"><span class="label">Client emails for Google sign-in</span>' +
+        '<input class="text" id="emails" type="text" inputmode="email" autocomplete="off" spellcheck="false" placeholder="amara@gmail.com, jon@gmail.com" value="' + esc((c.emails || []).join(", ")) + '">' +
+        '<small>Anyone signing in with Google using one of these emails opens this gallery. Separate several with commas.</small></label>' +
+    '</section>' +
+
+    /* Limits & timer */
+    '<section class="card"><h2>Limits &amp; <em>timer</em></h2>' +
+      '<div class="two">' +
+        '<label class="field"><span class="label">Edits they can select</span>' +
+          '<input class="text num" data-k="pick" data-num inputmode="numeric" value="' + (c.pick || "") + '" placeholder="No limit">' +
+          '<small>How many proofs they can pick for editing. Leave empty for no limit.</small></label>' +
+        '<label class="field"><span class="label">Photos they can download</span>' +
+          '<input class="text num" data-k="downloadLimit" data-num inputmode="numeric" value="' + (c.downloadLimit || "") + '" placeholder="No limit">' +
+          '<small>How many photos from Downloads each person can save. Leave empty for no limit.</small></label>' +
+      '</div>' +
+      '<div class="status" id="dl-status"></div>' +
+      '<label class="switch"><span><b>Download timer</b><small>Final edits lock after a set number of days, counted from the client\'s first sign-in.</small></span>' +
+        '<input type="checkbox" id="timer"' + (c.timer !== false ? " checked" : "") + '><i></i></label>' +
+      '<label class="field" id="days-row"><span class="label">Days to download</span>' +
+        '<input class="text num" data-k="downloadDays" data-num inputmode="numeric" value="' + (c.downloadDays || "") + '" placeholder="' + S.downloadDays + '"></label>' +
+      '<div class="status" id="timer-status"></div>' +
+    '</section>' +
+
+    /* Messages */
+    '<section class="card wide" id="msg-card"><h2>Messages</h2>' +
+      '<p class="sub">Your conversation with this client. They see it under Messages in their gallery.</p>' +
+      '<div class="chat" id="chat"></div>' +
+      '<form class="composer" id="composer"><textarea class="text" id="msg" rows="1" placeholder="Write a reply"></textarea>' +
+      '<button class="btn solid" type="submit">Send</button></form>' +
+    '</section>' +
+
+    /* Contract */
+    '<section class="card wide"><h2>Contract</h2>' +
+      '<p class="sub">Send an agreement for your client to sign in their gallery. Once sent it can\'t be edited, so they always sign exactly what you sent.</p>' +
+      '<div id="klist" style="display:grid;gap:12px"></div>' +
+      '<button class="btn" type="button" id="k-new" style="justify-self:start">New contract</button>' +
+      '<form id="k-form" hidden style="display:grid;gap:20px">' +
+        '<label class="field"><span class="label">Title</span><input class="text" id="k-title" value="Photography agreement"></label>' +
+        '<label class="field"><span class="label">Agreement</span><textarea class="text" id="k-body" style="min-height:320px"></textarea>' +
+        '<small>Filled in from your template in Site text &amp; settings. Replace anything in [brackets] before sending.</small></label>' +
+        '<p class="error" id="k-err"></p>' +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn solid" type="submit">Send to client</button><button class="btn quiet" type="button" id="k-cancel">Cancel</button></div>' +
+      '</form>' +
+    '</section>' +
+
+    /* Share link */
+    '<section class="card wide"><h2>Share <em>link</em></h2>' +
+      '<label class="switch"><span><b>Shareable link for events</b><small>Anyone with this link can open the gallery without a password and pass it around. Guests see Finals and Downloads; only your client sees Select.</small></span>' +
+        '<input type="checkbox" id="share"' + (c.shareToken ? " checked" : "") + '><i></i></label>' +
+      '<div id="share-row"></div>' +
+    '</section>' +
+
+    /* Photos */
+    '<section class="card wide"><div class="photohead"><h2>Photos</h2><div class="tabs" role="tablist" id="ptabs"></div></div>' +
+      '<p class="sub" id="psub"></p>' +
+      '<label class="drop" id="drop"><input type="file" id="files" multiple accept="image/*">' +
+        '<b>Add photos</b><span class="label">Drop JPEGs here or tap to choose</span></label>' +
+      '<div class="bar-progress" id="up-bar" hidden><i></i></div>' +
+      '<div class="thumbs" id="thumbs"></div>' +
+    '</section>' +
+
+    /* Selection */
+    '<section class="card wide" id="sel-card"><h2>Their <em>selection</em></h2><div id="sel"></div></section>' +
+
+    /* Wording */
+    '<section class="card wide"><h2>Gallery <em>wording</em></h2>' +
+      '<p class="sub">Change any of the text this client sees. Leave a box empty to use your default from Site text. Wrap a word in *asterisks* for italics; {name} inserts the client\'s name.</p>' +
+      '<div class="two" id="words"></div>' +
+    '</section>' +
+
+    '</div>' +
+    '<p style="margin-top:40px"><button class="link danger" type="button" id="del">Delete this folder</button></p>' +
+  '</div>';
+
+  function field(k, label, val, extra) {
+    return '<label class="field"><span class="label">' + label + '</span><input class="text" data-k="' + k + '" value="' + esc(val || "") + '" ' + (extra || "") + '></label>';
+  }
+  $("f-title").innerHTML = esc(c.name);
+
+  /* Wording fields */
+  var words = $("words");
+  GS.TEXT_FIELDS.filter(function (f) { return !f.global; }).forEach(function (f) {
+    var l = document.createElement("label"); l.className = "field";
+    var input = f.long ? document.createElement("textarea") : document.createElement("input");
+    input.className = "text"; input.placeholder = S.text[f.key]; input.value = (c.text && c.text[f.key]) || "";
+    input.addEventListener("input", function () { c.text = c.text || {}; c.text[f.key] = input.value; persist(); });
+    l.innerHTML = '<span class="label">' + f.label + '</span>';
+    l.appendChild(input);
+    words.appendChild(l);
+  });
+
+  /* Plain fields */
+  app.querySelectorAll("[data-k]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      var k = el.dataset.k;
+      if (el.hasAttribute("data-num")) {
+        var digits = el.value.replace(/[^0-9]/g, "");
+        if (digits !== el.value) el.value = digits;
+        c[k] = digits ? toInt(digits) : (k === "downloadDays" ? null : 0);
+      } else c[k] = el.value.trim();
+      if (k === "name") $("f-title").textContent = c.name || "Untitled";
+      if (k === "password") return checkPassword();
+      paintStatus();
+      persist();
+    });
+  });
+  var pwT;
+  function checkPassword() { clearTimeout(pwT); pwT = setTimeout(checkPasswordNow, 400); }
+  function checkPasswordNow() {
+    var pw = c.password;
+    GS.listClients().then(function (l) {
+      var clash = l.some(function (o) { return o.id !== c.id && o.password && o.password === pw; });
+      $("pw-err").textContent = !pw ? "Clients can't sign in until this folder has a password."
+        : clash ? "Another folder already uses this password. Pick a different one." : "";
+      if (!clash) persist();
+    });
+  }
+  $("emails").addEventListener("input", function () {
+    c.emails = this.value.split(/[\s,;]+/).map(function (e) { return e.trim().toLowerCase(); }).filter(function (e) { return /.+@.+\..+/.test(e); });
+    persist();
+  });
+  $("gen-pw").addEventListener("click", function () {
+    var i = app.querySelector('[data-k="password"]');
+    i.value = c.password = randomPassword();
+    checkPassword();
+  });
+  $("copy-pw").addEventListener("click", function () { copy(c.password, app.querySelector('[data-k="password"]')); });
+
+  /* Timer and limits */
+  $("timer").addEventListener("change", function () { c.timer = this.checked; paintStatus(); persist(); });
+  function paintStatus() {
+    $("days-row").hidden = c.timer === false;
+    var w = GS.window(c, S), ts = $("timer-status");
+    if (w.off) ts.innerHTML = "<span>Timer is off. Final edits stay downloadable until you turn it back on.</span>";
+    else if (!w.started) ts.innerHTML = "<span>Not opened yet. The " + w.days + "-day clock starts at the client's first sign-in.</span>";
+    else ts.innerHTML = "<span>" + (w.open ? "Opened " + fmtDate(c.firstLogin) + " · <b>" + plural(w.left, "day") + " left</b>" : "<b>Closed</b> on " + fmtDate(w.until)) +
+      '</span><button class="link" type="button" id="restart">' + (w.open ? "Restart clock" : "Reopen for " + w.days + " days") + "</button>";
+    if ($("restart")) $("restart").onclick = function () { c.firstLogin = Date.now(); paintStatus(); persist(); toast("Download window reopened"); };
+
+    var ds = $("dl-status"), used = (c.downloaded || []).length;
+    if (!c.downloadLimit) ds.innerHTML = "<span>Downloads: no limit.</span>";
+    else ds.innerHTML = "<span>Your client has used <b>" + used + " of " + c.downloadLimit + "</b> downloads.</span>" +
+      (used ? '<button class="link" type="button" id="reset-dl">Reset count</button>' : "");
+    if ($("reset-dl")) $("reset-dl").onclick = function () { c.downloaded = []; paintStatus(); persist(); toast("Download count reset"); };
+  }
+  paintStatus();
+
+  /* Share */
+  function paintShare() {
+    var row = $("share-row");
+    if (!c.shareToken) { row.innerHTML = ""; return; }
+    row.innerHTML = '<div class="sharebox"><input readonly id="share-url" value="' + esc(shareUrl(c)) + '" aria-label="Share link">' +
+      '<button class="btn small solid" type="button" id="copy-share">Copy link</button></div>' +
+      '<p class="hint" style="margin-top:12px">Turning the switch off stops this link working. <button class="link" type="button" id="new-share">Make a new link</button></p>';
+    $("copy-share").onclick = function () { copy(shareUrl(c), $("share-url")); };
+    $("new-share").onclick = function () { c.shareToken = randomToken(); paintShare(); persist(); toast("New link made. The old one no longer works."); };
+  }
+  $("share").addEventListener("change", function () { c.shareToken = this.checked ? randomToken() : ""; paintShare(); persist(); });
+  paintShare();
+
+  /* Photos */
+  var PT = [
+    { key: "proofs", title: "Proofs", sub: "Unedited JPEGs your client chooses from for editing." },
+    { key: "finals", title: "Finals", sub: "Your edited images. Downloadable while the timer allows." },
+    { key: "downloads", title: "Downloads", sub: "JPEGs they can save, up to the download limit if you set one." }
+  ];
+  var counts = {};
+  function paintPhotoTabs() {
+    $("ptabs").innerHTML = PT.map(function (t) {
+      return '<button class="tab" type="button" role="tab" data-p="' + t.key + '" aria-selected="' + (t.key === folderTab) + '">' + t.title + "<sup>" + (counts[t.key] || 0) + "</sup></button>";
+    }).join("");
+    $("ptabs").querySelectorAll("[data-p]").forEach(function (b) { b.onclick = function () { folderTab = b.dataset.p; loadPhotos(); }; });
+    $("psub").textContent = PT.filter(function (t) { return t.key === folderTab; })[0].sub;
+  }
+  function loadPhotos() {
+    return GS.listPhotos(c.id).then(function (all) {
+      PT.forEach(function (t) { counts[t.key] = all.filter(function (p) { return p.section === t.key; }).length; });
+      paintPhotoTabs();
+      var box = $("thumbs"); box.replaceChildren();
+      var picked = (c.selection ? c.selection.frames : []).concat(c.picks || []);
+      all.filter(function (p) { return p.section === folderTab; }).forEach(function (p) {
+        var f = document.createElement("figure"); f.className = "thumb";
+        var on = folderTab === "proofs" && picked.indexOf(p.name) > -1;
+        if (on) f.classList.add("picked");
+        var ph = document.createElement("div"); ph.className = "ph";
+        var u = GS.photoUrl(p);
+        if (u) { var im = new Image(); im.loading = "lazy"; im.src = u; im.alt = p.name; ph.appendChild(im); }
+        else ph.appendChild(GS.placeholder(p.name, 200));
+        f.appendChild(ph);
+        var cap = document.createElement("figcaption"); cap.textContent = p.name; f.appendChild(cap);
+        if (on) { var m = document.createElement("span"); m.className = "mark-on label"; m.textContent = "Picked"; f.appendChild(m); }
+        var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.innerHTML = "&times;";
+        x.setAttribute("aria-label", "Remove " + p.name);
+        x.onclick = function () { GS.deletePhoto(p.id).then(function () { flashSaved(); loadPhotos(); }); };
+        f.appendChild(x);
+        box.appendChild(f);
+      });
+      if (!box.children.length) box.innerHTML = '<p class="empty" style="grid-column:1/-1;padding:4px 0">Nothing here yet. This section stays hidden from the client until you add photos.</p>';
+    });
+  }
+  function upload(files) {
+    files = Array.from(files).filter(function (f) { return /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic)$/i.test(f.name); });
+    if (!files.length) return;
+    var bar = $("up-bar"), done = 0;
+    bar.hidden = false; bar.firstChild.style.width = "0";
+    files.reduce(function (p, f) {
+      return p.then(function () {
+        return GS.addPhoto(c.id, folderTab, f).then(function () { bar.firstChild.style.width = (++done / files.length * 100) + "%"; });
+      });
+    }, Promise.resolve()).then(function () {
+      bar.hidden = true; flashSaved(); toast(plural(done, "photo") + " added"); loadPhotos();
+    }).catch(function () {
+      bar.hidden = true; toast("Some photos couldn't be saved. This browser may be out of space."); loadPhotos();
+    });
+  }
+  $("files").addEventListener("change", function () { upload(this.files); this.value = ""; });
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { upload(e.dataTransfer.files); });
+  loadPhotos();
+
+  /* Selection */
+  var sel = $("sel");
+  if (c.selection) {
+    var s = c.selection;
+    sel.innerHTML = '<div class="status" style="border:0;padding:0"><span>Sent ' + fmtDate(s.sentAt) + ' · <b>' + plural(s.frames.length, "frame") + "</b></span>" +
+      '<button class="btn small" type="button" id="copy-sel">Copy file names</button></div>' +
+      (s.note ? '<p style="margin:16px 0;color:var(--grey)">Notes: <span style="color:var(--ink)">' + esc(s.note) + "</span></p>" : "") +
+      '<ul class="picklist" style="margin-top:16px">' + s.frames.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul>";
+    $("copy-sel").onclick = function () { copy(s.frames.join("\n")); };
+  } else {
+    var n = (c.picks || []).length;
+    sel.innerHTML = '<p class="muted" style="margin:0">' + (n ? "Your client has picked " + plural(n, "frame") + " so far but hasn't sent the selection yet." : "Nothing sent yet. When your client sends their picks, the list shows up here.") + "</p>";
+  }
+
+  /* Messages */
+  var shown = 0;
+  function loadChat() {
+    return GS.listMessages(c.id).then(function (l) {
+      if (l.length === shown && shown) return;
+      shown = l.length;
+      var box = $("chat");
+      if (!box) return;
+      box.replaceChildren();
+      if (!l.length) box.innerHTML = '<p class="muted" style="margin:0">No messages yet. Say hello, or wait for their first question.</p>';
+      l.forEach(function (m) {
+        var b = document.createElement("div");
+        b.className = "msg " + (m.from === "admin" ? "me" : "them");
+        b.textContent = m.text;
+        var t = document.createElement("small");
+        t.textContent = (m.from === "admin" ? "You" : c.name) + " · " + timeLabel(m.at) + (m.from === "admin" ? (m.read ? " · Seen" : "") : "");
+        b.appendChild(t); box.appendChild(b);
+      });
+      box.scrollTop = box.scrollHeight;
+      return GS.markRead(c.id, "admin").then(checkActivity);
+    });
+  }
+  openFolder = { id: c.id, refresh: function () { shown = -1; loadChat(); loadContracts(); } };
+  $("composer").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var ta = $("msg"), text = ta.value.trim();
+    if (!text) return;
+    ta.value = ""; ta.style.height = "auto";
+    GS.addMessage(c.id, "admin", text).then(function () { shown = -1; loadChat(); });
+  });
+  $("msg").addEventListener("input", function () { this.style.height = "auto"; this.style.height = Math.min(this.scrollHeight, 200) + "px"; });
+  $("msg").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && matchMedia("(hover: hover)").matches) { e.preventDefault(); $("composer").requestSubmit(); }
+  });
+  loadChat();
+
+  /* Contracts */
+  function loadContracts() {
+    GS.listContracts(c.id).then(function (ks) {
+      var box = $("klist");
+      if (!box) return;
+      box.replaceChildren();
+      ks.forEach(function (k) {
+        var done = k.status === "signed";
+        var d = document.createElement("div"); d.className = "kdoc";
+        d.innerHTML = '<div class="kdoc-head"><div><b></b><small>Sent ' + fmtDate(k.sentAt) + (done ? " · Signed " + fmtDate(k.signedAt) : "") + '</small></div>' +
+          '<div style="display:flex;gap:16px;align-items:center"><span class="label state' + (done ? " done" : "") + '">' + (done ? "Signed" : "Awaiting signature") + '</span>' +
+          (done ? "" : '<button class="link danger" type="button" data-withdraw>Withdraw</button>') + '</div></div>' +
+          (done ? '<div class="sig"><img alt="Signature"><span></span></div>' : "") +
+          '<details><summary>Read agreement</summary><pre></pre></details>';
+        d.querySelector("b").textContent = k.title;
+        d.querySelector("pre").textContent = k.body;
+        if (done) {
+          if (k.signature.image) d.querySelector(".sig img").src = k.signature.image; else d.querySelector(".sig img").remove();
+          d.querySelector(".sig span").textContent = "Signed by " + k.signature.name + " on " + new Date(k.signedAt).toLocaleString();
+        } else d.querySelector("[data-withdraw]").onclick = function () {
+          if (!confirm("Withdraw this contract? Your client won't see it any more.")) return;
+          GS.deleteContract(k.id).then(function () { toast("Contract withdrawn"); loadContracts(); checkActivity(); });
+        };
+        box.appendChild(d);
+      });
+    });
+  }
+  $("k-new").onclick = function () {
+    $("k-body").value = GS.fillTemplate(S.contractTemplate || "", c);
+    $("k-form").hidden = false; this.hidden = true; $("k-title").focus();
+  };
+  $("k-cancel").onclick = function () { $("k-form").hidden = true; $("k-new").hidden = false; };
+  $("k-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var title = $("k-title").value.trim(), body = $("k-body").value.trim();
+    if (!title || !body) { $("k-err").textContent = "Add a title and the agreement text."; return; }
+    if (/\[[^\]]+\]/.test(body) && !confirm("The agreement still has [bracketed] blanks. Send anyway?")) return;
+    $("k-err").textContent = "";
+    GS.saveContract({ id: GS.uid(), clientId: c.id, title: title, body: body, status: "sent", sentAt: Date.now(), signedAt: null, signature: null })
+      .then(function () {
+        $("k-form").hidden = true; $("k-new").hidden = false;
+        toast("Sent. It's waiting in their gallery."); loadContracts(); checkActivity();
+      });
+  });
+  loadContracts();
+
+  $("del").addEventListener("click", function () {
+    if (!confirm("Delete the folder for " + c.name + " and all its photos? This can't be undone.")) return;
+    GS.deleteClient(c.id).then(function () { toast("Folder deleted"); location.hash = ""; });
+  });
+}
+
+/* ---------- Site text & settings ---------- */
+function renderSettings() {
+  var app = $("app"), saveT;
+  function persist() { clearTimeout(saveT); saveT = setTimeout(function () { GS.saveSettings(S).then(flashSaved); }, 350); }
+  app.innerHTML = '<div class="wrap page">' +
+    '<div class="page-head"><h1>Site <em>text</em></h1></div>' + pageTabs("settings") +
+    '<div class="cards">' +
+    '<section class="card wide"><h2>Default <em>wording</em></h2>' +
+      '<p class="sub">What every client sees unless you change it in their folder. Wrap a word in *asterisks* for italics; {name} inserts the client\'s name.</p>' +
+      '<div class="two" id="words"></div></section>' +
+    '<section class="card"><h2>Settings</h2>' +
+      '<label class="field"><span class="label">Default days to download</span><input class="text num" id="s-days" inputmode="numeric" value="' + S.downloadDays + '"></label>' +
+      '<label class="field"><span class="label">Your email</span><input class="text" id="s-email" type="email" value="' + esc(S.contactEmail) + '"><small>Where selections go when no form endpoint is set.</small></label>' +
+      '<label class="field"><span class="label">Email notifications (Formspree endpoint)</span><input class="text" id="s-end" value="' + esc(S.selectionEndpoint) + '" placeholder="https://formspree.io/f/..."><small>Paste a Formspree endpoint and you\'ll get an email whenever a client messages you, signs a contract or sends a selection.</small></label>' +
+      '<div class="field"><span class="label">Desktop alerts</span><small>Pop-up alerts on this computer for new messages and signatures while the admin portal is open.</small>' +
+        '<button class="btn small" type="button" id="s-alerts" style="justify-self:start"></button></div>' +
+    '</section>' +
+    '<section class="card wide"><h2>Contract <em>template</em></h2>' +
+      '<p class="sub">The starting point for every new contract. {name}, {shoot}, {date} and {location} fill in from the client\'s folder. This is a sample only, so have a lawyer review your terms.</p>' +
+      '<textarea class="text" id="s-tpl" style="min-height:360px"></textarea>' +
+    '</section>' +
+    (GS.mode === "remote"
+      ? '<section class="card"><h2>Storage &amp; <em>sign-in</em></h2>' +
+          '<div class="status" style="border:0;padding:0"><span>Backblaze</span><b>Connected</b></div>' +
+          '<div class="status"><span>Google sign-in for clients</span><b>' + (S.googleClientId ? "On" : "Off: add GOOGLE_CLIENT_ID in Vercel") + '</b></div>' +
+          '<div class="field" style="border-top:1px solid var(--line);padding-top:16px"><span class="label">Finish storage setup</span>' +
+            '<small>Run this once so uploads and "Download all" can reach your portal bucket. Run it again if you add another web address.</small>' +
+            '<button class="btn small" type="button" id="st-run" style="justify-self:start">Finish setup</button></div>' +
+          '<div id="st-master" hidden style="display:grid;gap:14px">' +
+            '<small class="muted">Backblaze only lets the master key change this setting. Paste it once below. It\'s used for this one change and never saved. Find it under Application Keys, then Master Application Key (generating a new one is fine).</small>' +
+            '<label class="field"><span class="label">Master keyID</span><input class="text" id="st-id" autocomplete="off" spellcheck="false"></label>' +
+            '<label class="field"><span class="label">Master applicationKey</span><input class="text" id="st-key" type="password" autocomplete="off"></label>' +
+            '<button class="btn small solid" type="button" id="st-go" style="justify-self:start">Finish with master key</button></div>' +
+          '<p class="error" id="st-err"></p>' +
+          '<small class="muted">Your admin password is set in Vercel (ADMIN_PASSWORD). Change it there, then redeploy.</small>' +
+        '</section>'
+      : '<section class="card"><h2>Admin <em>password</em></h2>' +
+      '<label class="field"><span class="label">New password</span><input class="text" id="np1" type="password" autocomplete="new-password"></label>' +
+      '<label class="field"><span class="label">Type it again</span><input class="text" id="np2" type="password" autocomplete="new-password"></label>' +
+      '<p class="error" id="np-err"></p>' +
+      '<button class="btn" type="button" id="np-save" style="justify-self:start">Change password</button>' +
+    '</section>') + '</div></div>';
+
+  var words = $("words");
+  GS.TEXT_FIELDS.forEach(function (f) {
+    var l = document.createElement("label"); l.className = "field";
+    var input = f.long ? document.createElement("textarea") : document.createElement("input");
+    input.className = "text"; input.value = S.text[f.key]; input.placeholder = GS.DEFAULT_TEXT[f.key];
+    input.addEventListener("input", function () { S.text[f.key] = input.value.trim() || GS.DEFAULT_TEXT[f.key]; persist(); });
+    l.innerHTML = '<span class="label">' + f.label + '</span>';
+    l.appendChild(input);
+    words.appendChild(l);
+  });
+  $("s-days").addEventListener("input", function () {
+    this.value = this.value.replace(/[^0-9]/g, "");
+    S.downloadDays = toInt(this.value) || 14; persist();
+  });
+  $("s-email").addEventListener("input", function () { S.contactEmail = this.value.trim(); persist(); });
+  $("s-end").addEventListener("input", function () { S.selectionEndpoint = this.value.trim(); persist(); });
+  $("s-tpl").value = S.contractTemplate || "";
+  $("s-tpl").addEventListener("input", function () { S.contractTemplate = this.value; persist(); });
+  function paintAlerts() {
+    var b = $("s-alerts");
+    if (!("Notification" in window)) { b.textContent = "Not supported in this browser"; b.disabled = true; return; }
+    var p = Notification.permission;
+    b.textContent = p === "granted" ? "Alerts are on" : p === "denied" ? "Blocked in browser settings" : "Turn on alerts";
+    b.disabled = p !== "default";
+  }
+  $("s-alerts").onclick = function () { Notification.requestPermission().then(paintAlerts); };
+  paintAlerts();
+  if (GS.mode === "remote") {
+    var stDone = function (r) { $("st-err").textContent = ""; $("st-master").hidden = true; toast("Storage setup finished"); };
+    var stFail = function (e) {
+      if (/needs-master-key/.test(e.message)) { $("st-master").hidden = false; $("st-err").textContent = ""; }
+      else $("st-err").textContent = e.message;
+    };
+    $("st-run").onclick = function () { GS.setupStorage().then(stDone, stFail); };
+    $("st-go").onclick = function () {
+      GS.setupStorage($("st-id").value.trim(), $("st-key").value.trim()).then(function (r) {
+        $("st-id").value = $("st-key").value = ""; stDone(r);
+      }, stFail);
+    };
+    return;
+  }
+  $("np-save").addEventListener("click", function () {
+    var a = $("np1").value, b = $("np2").value, err = $("np-err");
+    if (a.length < 8) { err.textContent = "Use at least 8 characters."; return; }
+    if (a !== b) { err.textContent = "The two passwords don't match."; return; }
+    err.textContent = "";
+    GS.hash(a).then(function (h) { S.adminHash = h; return GS.saveSettings(S); }).then(function () {
+      $("np1").value = $("np2").value = ""; toast("Password changed");
+    });
+  });
+}
+
+/* ---------- Activity: unread messages and signatures, checked every few seconds ---------- */
+var activity = { unread: {}, contracts: {}, seen: null };
+var openFolder = null;
+function timeLabel(t) {
+  var d = new Date(t), today = new Date().toDateString() === d.toDateString();
+  return (today ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ", ") +
+    d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+function alertMe(title, body) {
+  toast(title);
+  try { if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body: body }); } catch (e) {}
+}
+function checkActivity() {
+  return Promise.all([GS.allMessages(), GS.allContracts(), GS.listClients()]).then(function (r) {
+    var msgs = r[0], ks = r[1], names = {};
+    r[2].forEach(function (c) { names[c.id] = c.name; });
+    var unread = {}, contracts = {}, total = 0, first = null;
+    msgs.forEach(function (m) {
+      if (m.from === "client" && !m.read) { unread[m.clientId] = (unread[m.clientId] || 0) + 1; total++; first = first || m.clientId; }
+    });
+    ks.forEach(function (k) {
+      var x = contracts[k.clientId] = contracts[k.clientId] || { total: 0, signed: 0 };
+      x.total++; if (k.status === "signed") x.signed++;
+    });
+    /* Alert on anything new since the last check (not on first load). */
+    var seen = { msgs: {}, signed: {} };
+    msgs.forEach(function (m) { if (m.from === "client") seen.msgs[m.id] = 1; });
+    ks.forEach(function (k) { if (k.status === "signed") seen.signed[k.id] = 1; });
+    if (activity.seen) {
+      var changed = false;
+      msgs.forEach(function (m) {
+        if (m.from === "client" && !activity.seen.msgs[m.id]) { changed = true; alertMe("New message from " + (names[m.clientId] || "a client"), m.text); }
+      });
+      ks.forEach(function (k) {
+        if (k.status === "signed" && !activity.seen.signed[k.id]) { changed = true; alertMe((names[k.clientId] || "A client") + " signed " + (k.title || "their contract"), ""); }
+      });
+      if (changed && openFolder) openFolder.refresh();
+    }
+    activity = { unread: unread, contracts: contracts, seen: seen };
+    var ib = $("inbox");
+    ib.hidden = !total || !ss("gsp-admin");
+    ib.textContent = plural(total, "new message");
+    ib.href = first ? "#" + encodeURIComponent(first) : "#";
+  });
+}
+var lastCheck = 0;
+setInterval(function () {
+  if (!ss("gsp-admin") || Date.now() - lastCheck < Math.max(6000, GS.pollMs)) return;
+  lastCheck = Date.now(); checkActivity().catch(function () {});
+}, 1000);
+
+/* ---------- Start ---------- */
+GS.useRole("admin");
+GS.getSettings().then(function (s) {
+  S = s;
+  var signedIn = ss("gsp-admin") && (GS.mode === "remote" ? GS.hasSession() : S.adminHash);
+  if (signedIn) enter(); else showGate();
+});
+</script>
+</body>
+</html>

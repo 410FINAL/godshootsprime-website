@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GODSHOOTSPRIME</title>
+<meta name="description" content="GODSHOOTSPRIME. Photography for events, couples, fashion and boudoir. Commissions by inquiry.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&display=swap">
+<style>
+/* Layout: black gallery walls. One hero frame, a tabbed portfolio, a three-step process, and a full-screen inquiry that asks one thing at a time. */
+:root {
+  --black: #000000;
+  --ink: #f4f4f4;
+  --grey: #8e8e8e;
+  --dim: #5c5c5c;
+  --line: #222222;
+  --lift: #0d0d0d;
+  --white: #ffffff;
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(16px, 5vw, 72px);
+  --ease: cubic-bezier(.22, .61, .2, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--black);
+  color: var(--ink);
+  font: 300 16px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+a, button, label { touch-action: manipulation; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 1px solid var(--white); outline-offset: 4px; }
+::selection { background: var(--white); color: var(--black); }
+
+.label {
+  font: 500 11px/1.2 var(--sans);
+  font-stretch: 115%;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.muted { color: var(--grey); }
+.wrap { padding-inline: var(--gutter); max-width: 1440px; margin-inline: auto; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 52px; padding: 0 28px;
+  border: 1px solid var(--ink);
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  transition: background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease);
+}
+.btn.solid { background: var(--white); color: var(--black); border-color: var(--white); }
+.btn[disabled] { opacity: .5; cursor: progress; }
+.link {
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  padding-bottom: 6px; border-bottom: 1px solid var(--dim);
+  transition: border-color .3s;
+}
+
+/* Top bar */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(0, 0, 0, .82);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color .4s;
+}
+.bar.scrolled { border-color: var(--line); }
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+.mark { font: 500 12px/1 var(--sans); font-stretch: 125%; letter-spacing: .38em; white-space: nowrap; }
+.bar nav { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); }
+.bar nav a.navlink { color: var(--grey); transition: color .3s; }
+.bar .btn { min-height: 40px; padding: 0 20px; }
+
+/* Hero */
+.hero {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: center;
+  padding-block: calc(72px + clamp(40px, 8vw, 110px)) clamp(72px, 10vw, 150px);
+}
+.hero-text { grid-column: 1 / span 6; display: grid; gap: 32px; }
+.hero h1 {
+  margin: 0;
+  font: 400 clamp(46px, 6.6vw, 104px)/.98 var(--display);
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.hero h1 em { font-style: italic; }
+.hero p { margin: 0; max-width: 40ch; color: var(--grey); font-size: 17px; }
+.hero .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 28px; }
+.hero-frame { grid-column: 8 / span 5; display: grid; gap: 14px; margin: 0; }
+.hero-frame .frame { aspect-ratio: 4 / 5; }
+.hero-frame figcaption { display: flex; justify-content: space-between; gap: 12px; color: var(--grey); }
+
+.frame { position: relative; overflow: hidden; background: var(--lift); max-width: 100%; }
+.frame canvas, .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Sections */
+section.block { padding-block: clamp(72px, 10vw, 150px); border-top: 1px solid var(--line); }
+.head {
+  display: flex; justify-content: space-between; align-items: end; gap: 24px 48px; flex-wrap: wrap;
+  margin-bottom: clamp(36px, 5vw, 64px);
+}
+.head h2 {
+  margin: 0;
+  font: 400 clamp(36px, 4.4vw, 64px)/1 var(--display);
+  letter-spacing: -.015em;
+}
+.head h2 em { font-style: italic; }
+
+/* Portfolio */
+.tabs { display: flex; gap: clamp(18px, 3vw, 40px); flex-wrap: wrap; }
+.tab {
+  position: relative; padding-bottom: 10px; color: var(--grey);
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  transition: color .3s;
+}
+.tab::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--white);
+  transform: scaleX(0); transform-origin: left; transition: transform .45s var(--ease);
+}
+.tab[aria-selected="true"] { color: var(--white); }
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+.cat-intro {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px 40px; flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.cat-intro p { margin: 0; max-width: 52ch; color: var(--grey); }
+/* Masonry built from flex columns (CSS multi-column mis-paints tiles on iPhone Safari). */
+.gallery { display: flex; align-items: flex-start; gap: 20px; transition: opacity .35s var(--ease); }
+.gallery .col { flex: 1 1 0; min-width: 0; display: grid; gap: 20px; }
+.gallery.fading { opacity: 0; }
+.tile { margin: 0; }
+.tile button { display: block; width: 100%; position: relative; }
+.tile .frame canvas, .tile .frame img { transition: transform 1.4s var(--ease), opacity .6s; }
+.tile .cap {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 18px 16px; text-align: left;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .7));
+  opacity: 0; transition: opacity .4s var(--ease);
+}
+.gallery-foot { display: flex; justify-content: center; margin-top: clamp(28px, 4vw, 48px); }
+
+/* Process */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 64px); }
+.step { display: grid; gap: 16px; align-content: start; border-top: 1px solid var(--dim); padding-top: 24px; }
+.step h3 { margin: 0; font: 400 clamp(24px, 2.4vw, 32px)/1.15 var(--display); }
+.step p { margin: 0; color: var(--grey); max-width: 36ch; }
+
+/* Closing call */
+.closing { text-align: center; display: grid; justify-items: center; gap: 36px; }
+.closing h2 {
+  margin: 0; max-width: 16ch;
+  font: 400 clamp(40px, 6vw, 88px)/1 var(--display); letter-spacing: -.02em; text-wrap: balance;
+}
+.closing h2 em { font-style: italic; }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap;
+  padding-block: 32px calc(32px + env(safe-area-inset-bottom, 0px));
+  color: var(--grey);
+}
+footer .contact { display: flex; gap: 12px 32px; flex-wrap: wrap; }
+footer .contact span { user-select: all; }
+
+/* Lightbox */
+.lb {
+  position: fixed; inset: 0; z-index: 70; background: var(--black);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) var(--gutter) calc(18px + env(safe-area-inset-bottom, 0px));
+}
+.lb-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 40px; }
+.lb-stage { display: grid; place-items: center; min-height: 0; padding-block: 16px; }
+.lb-stage .frame { height: 100%; max-height: 100%; background: none; }
+.lb-stage canvas, .lb-stage img { width: auto; height: 100%; max-width: 100%; object-fit: contain; margin: auto; }
+.lb-nav { display: flex; gap: 28px; }
+
+/* Inquiry */
+.flow {
+  position: fixed; inset: 0; z-index: 60; background: var(--black);
+  overflow-y: auto; overscroll-behavior: contain;
+  display: grid; grid-template-rows: auto auto 1fr;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.flow-top .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; height: 72px; }
+.flow-top .count { color: var(--grey); }
+.progress { height: 1px; background: var(--line); }
+.progress i { display: block; height: 100%; background: var(--white); width: 0; transition: width .6s var(--ease); }
+.flow-body { display: grid; align-content: center; padding-block: clamp(40px, 7vw, 96px); }
+.q { width: 100%; max-width: 720px; margin-inline: auto; display: grid; gap: 36px; animation: rise .55s var(--ease); }
+@keyframes rise { from { transform: translateY(14px); opacity: .001; } to { transform: none; opacity: 1; } }
+.q-head { display: grid; gap: 14px; }
+.q h2 {
+  margin: 0; outline: none;
+  font: 400 clamp(34px, 4.6vw, 60px)/1.04 var(--display); letter-spacing: -.015em; text-wrap: balance;
+}
+.q h2 em { font-style: italic; }
+.q-head p { margin: 0; color: var(--grey); max-width: 52ch; }
+
+.field { border: 0; margin: 0; padding: 0; display: grid; gap: 14px; min-width: 0; }
+.field legend, .field > label.label { padding: 0; margin-bottom: 14px; color: var(--grey); }
+.field > label.label { margin-bottom: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.chip span {
+  display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px;
+  border: 1px solid var(--dim); font-size: 15px; cursor: pointer;
+  transition: border-color .25s, background .25s, color .25s;
+}
+.choice input:checked + span { background: var(--white); color: var(--black); border-color: var(--white); }
+.choice input:focus-visible + span { outline: 1px solid var(--white); outline-offset: 3px; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.card span {
+  display: grid; gap: 8px; height: 100%; padding: 26px 24px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--lift);
+  transition: border-color .25s, background .25s, color .25s;
+}
+.card b { font: 400 28px/1 var(--display); }
+.card small { color: var(--grey); font-size: 14px; line-height: 1.5; transition: color .25s; }
+.card input:checked + span { background: var(--white); color: var(--black); border-color: var(--white); }
+.card input:checked + span small { color: #444444; }
+
+.inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
+.inputs .full { grid-column: 1 / -1; }
+.text {
+  width: 100%; min-width: 0; background: transparent; color: var(--white);
+  border: 0; border-bottom: 1px solid var(--dim); border-radius: 0;
+  padding: 10px 0 12px; font: 300 20px/1.4 var(--sans);
+  transition: border-color .25s;
+}
+.text::placeholder { color: var(--dim); }
+.text:focus { outline: none; border-color: var(--white); }
+textarea.text { resize: vertical; min-height: 110px; font-size: 17px; line-height: 1.6; }
+input[type="date"].text { color-scheme: dark; }
+.check { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; color: var(--grey); font-size: 15px; }
+.check input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--white); flex: none; }
+
+.error { color: var(--white); font-size: 14px; min-height: 1.4em; margin: -18px 0 0; }
+.error:not(:empty)::before { content: "— "; color: var(--grey); }
+.q-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.q-actions .back { color: var(--grey); }
+.hint { color: var(--dim); font-size: 13px; }
+
+.summary { display: grid; grid-template-columns: max-content 1fr; gap: 12px 32px; margin: 0; border-top: 1px solid var(--line); padding-top: 24px; }
+.summary dt { color: var(--grey); }
+.summary dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+@media (hover: hover) {
+  .btn:hover { background: var(--white); color: var(--black); border-color: var(--white); }
+  .btn.solid:hover { background: transparent; color: var(--white); }
+  .link:hover { border-color: var(--white); }
+  .bar nav a.navlink:hover { color: var(--white); }
+  .tab:hover { color: var(--ink); }
+  .tile button:hover canvas, .tile button:hover img { transform: scale(1.03); }
+  .tile button:hover .cap, .tile button:focus-visible .cap { opacity: 1; }
+  .lb button:hover { color: var(--white); }
+  .chip:hover span { border-color: var(--ink); }
+  .card:hover span { border-color: var(--dim); }
+  .q-actions .back:hover { color: var(--white); }
+}
+
+/* Opening */
+.intro {
+  position: fixed; inset: 0; z-index: 100; background: var(--black);
+  display: grid; place-items: center; padding: 24px var(--gutter);
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.1s cubic-bezier(.76, 0, .24, 1);
+}
+.intro.out { clip-path: inset(0 0 100% 0); }
+.intro figure { margin: 0; width: 100%; display: grid; gap: 28px; justify-items: center; text-align: center; }
+.intro blockquote {
+  margin: 0; max-width: 11em; text-wrap: balance;
+  font: 400 clamp(34px, 5.4vw, 76px)/1.08 var(--display); letter-spacing: -.015em;
+}
+.intro blockquote em { font-style: italic; }
+.intro .w { display: inline-block; opacity: 0; transform: translateY(.35em); filter: blur(6px); animation: word .9s var(--ease) forwards; }
+@keyframes word { to { opacity: 1; transform: none; filter: none; } }
+.intro .rule { width: 56px; height: 1px; background: var(--grey); transform: scaleX(0); animation: draw .8s var(--ease) forwards; }
+@keyframes draw { to { transform: scaleX(1); } }
+.intro figcaption { opacity: 0; animation: fade .8s var(--ease) forwards; color: var(--grey); }
+@keyframes fade { to { opacity: 1; } }
+.intro .skip { position: absolute; right: var(--gutter); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); color: var(--dim); }
+body.opening { overflow: hidden; }
+body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
+body.revealed .hero-frame { animation-delay: .15s; }
+body.revealed .hero-text > :nth-child(2) { animation-delay: .1s; }
+body.revealed .hero-text > :nth-child(3) { animation-delay: .2s; }
+body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
+
+/* Phone tab bar */
+.tabbar { display: none; }
+.btn:active, .tab:active, .choice:active span, .tabbar a:active { transform: scale(.97); }
+.btn, .choice span, .tabbar a { transition-property: background, color, border-color, transform; }
+@media (max-width: 860px) {
+  .hero-text { grid-column: 1 / -1; }
+  .hero-frame { grid-column: 1 / -1; }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .bar nav a.navlink { display: none; }
+}
+
+@media (max-width: 760px) {
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  .bar .wrap { height: 56px; justify-content: center; }
+  .bar nav { display: none; }
+  .tabbar {
+    display: grid; grid-template-columns: 1fr 1fr 1.25fr; align-items: center; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgba(0, 0, 0, .9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+  }
+  .tabbar a {
+    display: grid; justify-items: center; gap: 5px; padding: 6px 0; color: var(--grey);
+    font: 500 10px/1 var(--sans); font-stretch: 112%; letter-spacing: .18em; text-transform: uppercase;
+  }
+  .tabbar a.on { color: var(--white); }
+  .tabbar svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.2; }
+  .tabbar a.cta { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 48px; background: var(--white); color: var(--black); }
+  .tabbar a.cta svg { width: 16px; height: 16px; }
+
+  .hero { padding-block: 56px 64px; gap: 28px; }
+  .hero-frame { order: -1; margin-inline: calc(var(--gutter) * -1); }
+  .hero-frame .frame { aspect-ratio: 1 / 1; }
+  .hero-frame figcaption { padding-inline: var(--gutter); }
+  .hero h1 { font-size: clamp(44px, 13vw, 60px); }
+  .hero p { font-size: 16px; }
+  .hero .actions { display: none; }
+
+  section.block { padding-block: 56px; scroll-margin-top: 56px; }
+  .head { margin-bottom: 20px; gap: 20px; }
+  .tabs {
+    flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+    margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); width: calc(100% + var(--gutter) * 2);
+    gap: 8px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    scroll-snap-align: start; flex: none; padding: 12px 18px; border: 1px solid var(--line);
+  }
+  .tab::after { display: none; }
+  .tab[aria-selected="true"] { background: var(--white); color: var(--black); border-color: var(--white); }
+  .cat-intro { margin-bottom: 20px; }
+  .cat-intro p { font-size: 15px; }
+  .gallery { gap: 6px; margin-inline: calc(var(--gutter) * -1 + 6px); }
+  .gallery .col { gap: 6px; }
+  .tile .cap { display: none; }
+
+  .steps {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 12px;
+    margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter);
+  }
+  .steps::-webkit-scrollbar { display: none; }
+  .step { flex: 0 0 82%; scroll-snap-align: start; background: var(--lift); border: 1px solid var(--line); padding: 24px 22px 28px; }
+
+  .closing { gap: 28px; }
+  .closing .btn { width: 100%; }
+  footer .wrap { justify-content: center; text-align: center; }
+  footer .contact { justify-content: center; }
+
+  .lb { padding-inline: 0; }
+  .lb-row { padding-inline: var(--gutter); }
+  .lb-stage { touch-action: pan-y; }
+  .lb-nav { display: none; }
+
+  .flow-top .wrap { height: 56px; }
+  .flow-body { align-content: start; padding-block: 28px 0; }
+  .q { gap: 28px; }
+  .q h2 { font-size: clamp(32px, 9vw, 40px); }
+  .q-actions {
+    position: sticky; bottom: 0; z-index: 2;
+    margin-inline: calc(var(--gutter) * -1); padding: 14px var(--gutter) calc(14px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(transparent, var(--black) 22%);
+    flex-wrap: nowrap;
+  }
+  .q-actions .btn { flex: 1; min-height: 54px; }
+  .q-actions .back { flex: none; padding: 16px 8px 16px 0; }
+  .chip span { min-height: 48px; padding: 0 18px; }
+  .card span { padding: 18px 20px; grid-template-columns: 1fr auto; align-items: baseline; }
+  .card b { font-size: 24px; }
+  .card small { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .cards, .inputs { grid-template-columns: minmax(0, 1fr); }
+  .mark { letter-spacing: .26em; font-size: 11px; }
+  .summary { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .summary dd { margin-bottom: 12px; }
+  .hint { display: none; }
+  .cards { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .intro .w, .intro figcaption { opacity: 1; transform: none; filter: none; }
+  .intro .rule { transform: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro" role="presentation">
+  <figure>
+    <blockquote id="intro-quote"></blockquote>
+    <div class="rule" id="intro-rule"></div>
+    <figcaption class="label" id="intro-by"></figcaption>
+  </figure>
+  <button type="button" class="skip label" id="intro-skip">Skip</button>
+</div>
+
+<header class="bar" id="bar">
+  <div class="wrap">
+    <a class="mark" href="#top">GODSHOOTSPRIME</a>
+    <nav aria-label="Main">
+      <a class="navlink label" href="#work">Work</a>
+      <a class="navlink label" href="#process">Booking</a>
+      <a class="navlink label" href="client.html">Clients</a>
+      <a class="btn" href="#inquire" data-inquire>Inquire</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-text">
+        <span class="label muted">Photography · Commissions by inquiry</span>
+        <h1>The art of being <em>seen.</em></h1>
+        <p>Events, couples, fashion and boudoir, photographed with restraint and printed with intent. Tell me what you have in mind and I'll send you a personal quote.</p>
+        <div class="actions">
+          <a class="btn solid" href="#inquire" data-inquire>Begin your inquiry</a>
+          <a class="link" href="#work">View the work</a>
+        </div>
+      </div>
+      <figure class="hero-frame">
+        <div class="frame" id="hero-frame"></div>
+        <figcaption class="label"><span id="hero-cap"></span><span>GSP</span></figcaption>
+      </figure>
+    </section>
+  </div>
+
+  <section class="block" id="work">
+    <div class="wrap">
+      <div class="head">
+        <h2>Selected <em>work</em></h2>
+        <div class="tabs" role="tablist" aria-label="Categories" id="tabs"></div>
+      </div>
+      <div class="cat-intro">
+        <p id="cat-line"></p>
+        <span class="label muted" id="cat-count"></span>
+      </div>
+      <div class="gallery" id="gallery" role="tabpanel"></div>
+      <div class="gallery-foot">
+        <a class="link" href="#inquire" id="cat-inquire" data-inquire>Inquire</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="process">
+    <div class="wrap">
+      <div class="head">
+        <h2>How <em>booking</em> works</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="label muted">01</span>
+          <h3>Tell me about your shoot</h3>
+          <p>Five short questions: what, when, where, your budget and how to reach you. It takes about two minutes.</p>
+        </div>
+        <div class="step">
+          <span class="label muted">02</span>
+          <h3>Receive your quote</h3>
+          <p>I read every inquiry personally and email a tailored quote within 48 hours, with coverage, deliverables and timing.</p>
+        </div>
+        <div class="step">
+          <span class="label muted">03</span>
+          <h3>Reserve your date</h3>
+          <p>A signed agreement and a retainer hold your date. From there we plan the look, the light and the details together.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap closing">
+      <h2>Tell me what you're <em>imagining.</em></h2>
+      <a class="btn solid" href="#inquire" data-inquire>Begin your inquiry</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap label">
+    <span>© 2026 GODSHOOTSPRIME</span>
+    <a href="client.html">Client login</a>
+    <div class="contact">
+      <span id="foot-email"></span>
+      <span id="foot-ig"></span>
+    </div>
+  </div>
+</footer>
+
+
+<nav class="tabbar" id="tabbar" aria-label="Quick navigation">
+  <a href="#work" data-sec="work"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="9"/><rect x="13.5" y="3.5" width="7" height="5"/><rect x="3.5" y="15.5" width="7" height="5"/><rect x="13.5" y="11.5" width="7" height="9"/></svg>Work</a>
+  <a href="#process" data-sec="process"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15"/><path d="M3.5 10h17M8 3v5M16 3v5"/></svg>Booking</a>
+  <a href="#inquire" class="cta" data-inquire><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>Inquire</a>
+</nav>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photograph">
+  <div class="lb-row">
+    <span class="label" id="lb-title"></span>
+    <button class="label" id="lb-close" type="button">Close</button>
+  </div>
+  <div class="lb-stage" id="lb-stage"></div>
+  <div class="lb-row">
+    <span class="label muted" id="lb-cap"></span>
+    <div class="lb-nav label">
+      <button type="button" id="lb-prev">Prev</button>
+      <button type="button" id="lb-next">Next</button>
+    </div>
+  </div>
+</div>
+
+<div class="flow" id="flow" hidden role="dialog" aria-modal="true" aria-label="Booking inquiry">
+  <div class="flow-top">
+    <div class="wrap">
+      <span class="mark">GODSHOOTSPRIME</span>
+      <span class="label count" id="flow-count"></span>
+      <button class="label muted" type="button" id="flow-close">Close</button>
+    </div>
+  </div>
+  <div class="progress" aria-hidden="true"><i id="flow-bar"></i></div>
+  <div class="flow-body wrap">
+    <form id="flow-form" novalidate></form>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   SETTINGS: edit these
+   ================================================================ */
+
+/* Where inquiries are sent. Create a free form at formspree.io,
+   paste its endpoint here, and every inquiry arrives in your inbox
+   with the client's email set as reply-to. Leave empty for preview mode. */
+var FORM_ENDPOINT = "";
+
+/* Opening quote. Wrap a word in *asterisks* to set it in italics. */
+var INTRO = {
+  quote: "You don't take a photograph, you *make* it.",
+  by: "Ansel Adams"
+};
+
+var CONTACT = {
+  email: "godshootsprime@gmail.com",
+  instagram: "@godshootsprime"
+};
+
+var CURRENCY_BUDGETS = ["Under $1,000", "$1,000 to $2,500", "$2,500 to $5,000", "$5,000+", "Not sure yet"];
+
+/* Your photos. Drop files into images/<category>/ and list them here.
+   Any photo that can't be found shows a placeholder until you add it. */
+var HERO = { src: "images/hero.jpg", caption: "Fashion, Look 01", cat: "fashion" };
+
+var GALLERIES = {
+  events: {
+    title: "Events",
+    line: "Galas, launches and private evenings. The room as it felt, lit by what was already there.",
+    photos: [
+      { src: "images/events/01.jpg", caption: "Opening night" },
+      { src: "images/events/02.jpg", caption: "The toast" },
+      { src: "images/events/03.jpg", caption: "Last dance" },
+      { src: "images/events/04.jpg", caption: "Afterparty" },
+      { src: "images/events/05.jpg", caption: "Guest list" },
+      { src: "images/events/06.jpg", caption: "House lights" }
+    ]
+  },
+  couples: {
+    title: "Couples",
+    line: "Two people, unposed. Engagements, weddings and the quiet moments in between.",
+    photos: [
+      { src: "images/couples/01.jpg", caption: "Held" },
+      { src: "images/couples/02.jpg", caption: "Golden hour" },
+      { src: "images/couples/03.jpg", caption: "Vows" },
+      { src: "images/couples/04.jpg", caption: "Between takes" },
+      { src: "images/couples/05.jpg", caption: "Walk home" },
+      { src: "images/couples/06.jpg", caption: "Morning after" }
+    ]
+  },
+  fashion: {
+    title: "Fashion",
+    line: "Editorial, lookbook and campaign work. Hard light, clean lines, the garment first.",
+    photos: [
+      { src: "images/fashion/01.jpg", caption: "Look 01" },
+      { src: "images/fashion/02.jpg", caption: "Look 02" },
+      { src: "images/fashion/03.jpg", caption: "Silhouette" },
+      { src: "images/fashion/04.jpg", caption: "Look 04" },
+      { src: "images/fashion/05.jpg", caption: "Backlit" },
+      { src: "images/fashion/06.jpg", caption: "Look 06" }
+    ]
+  },
+  boudoir: {
+    title: "Boudoir",
+    line: "Private portraiture on a closed set. Window light, your pace, and your images stay yours.",
+    photos: [
+      { src: "images/boudoir/01.jpg", caption: "Window light" },
+      { src: "images/boudoir/02.jpg", caption: "Linen" },
+      { src: "images/boudoir/03.jpg", caption: "Shadow study" },
+      { src: "images/boudoir/04.jpg", caption: "Silk" },
+      { src: "images/boudoir/05.jpg", caption: "Late afternoon" },
+      { src: "images/boudoir/06.jpg", caption: "Blinds" }
+    ]
+  }
+};
+/* ================================================================ */
+
+var ORDER = ["events", "couples", "fashion", "boudoir"];
+var RATIOS = [[4, 5], [3, 4], [4, 5], [2, 3], [1, 1], [3, 4]];
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (m) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]; }); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+/* ---------- Placeholder studies: abstract light in black and grey ---------- */
+function rng(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+function study(cat, seed, w, h) {
+  var c = document.createElement("canvas");
+  var k = 480 / Math.max(w, h);
+  c.width = Math.round(w * k); c.height = Math.round(h * k);
+  var x = c.getContext("2d"), W = c.width, H = c.height;
+  var r = rng((cat.length * 7919 + seed * 104729) % 2147483646 + 1);
+  function pool(px, py, rad, level, alpha) {
+    var g = x.createRadialGradient(px, py, 0, px, py, rad);
+    g.addColorStop(0, "rgba(" + level + "," + level + "," + level + "," + alpha + ")");
+    g.addColorStop(1, "rgba(" + level + "," + level + "," + level + ",0)");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+  }
+  x.fillStyle = "#050505"; x.fillRect(0, 0, W, H);
+  if (cat === "events") {
+    pool(W * (0.3 + r() * 0.4), H * 0.35, W * 0.9, 90, 0.8);
+    x.filter = "blur(" + Math.round(W / 70) + "px)";
+    for (var i = 0; i < 26; i++) {
+      var s = W * (0.015 + r() * 0.07);
+      x.fillStyle = "rgba(255,255,255," + (0.06 + r() * 0.38) + ")";
+      x.beginPath(); x.arc(r() * W, r() * H * 0.7, s, 0, 7); x.fill();
+    }
+  } else if (cat === "couples") {
+    var cx = W * (0.35 + r() * 0.3), cy = H * (0.35 + r() * 0.2);
+    pool(cx - W * 0.14, cy, W * 0.6, 200, 0.55);
+    pool(cx + W * 0.14, cy + H * 0.06, W * 0.55, 230, 0.5);
+    pool(W * 0.5, H * 1.1, W * 0.9, 60, 0.6);
+  } else if (cat === "fashion") {
+    var g = x.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#d2d2d2"); g.addColorStop(0.75, "#8a8a8a"); g.addColorStop(1, "#5a5a5a");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.filter = "blur(" + Math.round(W / 160) + "px)";
+    x.fillStyle = "rgba(0,0,0,.9)";
+    var a = r();
+    x.beginPath();
+    x.moveTo(W * (0.25 + a * 0.5), -10);
+    x.lineTo(W + 10, -10); x.lineTo(W + 10, H + 10);
+    x.lineTo(W * (0.05 + a * 0.4), H + 10);
+    x.closePath(); x.fill();
+  } else {
+    pool(W * 0.2, H * 0.3, W * 1.1, 120, 0.65);
+    x.filter = "blur(" + Math.round(W / 45) + "px)";
+    x.save();
+    x.translate(W * 0.5, H * 0.5); x.rotate(-0.35 + r() * 0.2); x.translate(-W, -H);
+    for (var b = 0; b < 14; b++) {
+      x.fillStyle = "rgba(235,235,235," + (0.1 + r() * 0.14) + ")";
+      x.fillRect(0, H * 0.55 + b * H * 0.07, W * 1.4, H * 0.03);
+    }
+    x.restore();
+  }
+  x.filter = "none";
+  var v = x.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.55)");
+  x.fillStyle = v; x.fillRect(0, 0, W, H);
+  var d = x.getImageData(0, 0, W, H), p = d.data;
+  for (var n = 0; n < p.length; n += 4) {
+    var e = (r() - 0.5) * 18; p[n] += e; p[n + 1] += e; p[n + 2] += e;
+  }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+
+/* Real photo when it exists, placeholder otherwise. */
+function photo(item, cat, seed, ratio, host, keepRatio) {
+  var ph = study(cat, seed, ratio[0], ratio[1]);
+  ph.setAttribute("role", "img");
+  ph.setAttribute("aria-label", (item.caption || GALLERIES[cat].title) + " (placeholder)");
+  if (!keepRatio) host.style.aspectRatio = ratio[0] + " / " + ratio[1];
+  host.replaceChildren(ph);
+  if (!item.src) return;
+  var img = new Image();
+  img.alt = item.caption || GALLERIES[cat].title;
+  img.decoding = "async";
+  img.onload = function () {
+    if (!keepRatio) host.style.aspectRatio = img.naturalWidth + " / " + img.naturalHeight;
+    if (ph.parentNode === host) host.replaceChild(img, ph);
+  };
+  img.src = item.src;
+}
+
+/* ---------- Hero, footer ---------- */
+photo(HERO, HERO.cat, 99, [4, 5], $("hero-frame"), true);
+$("hero-cap").textContent = HERO.caption;
+$("foot-email").textContent = CONTACT.email;
+$("foot-ig").textContent = CONTACT.instagram;
+
+var bar = $("bar");
+addEventListener("scroll", function () { bar.classList.toggle("scrolled", scrollY > 8); }, { passive: true });
+
+/* ---------- Portfolio ---------- */
+var current = "events";
+var tabs = $("tabs");
+ORDER.forEach(function (k) {
+  var t = document.createElement("button");
+  t.type = "button"; t.className = "tab"; t.id = "tab-" + k;
+  t.setAttribute("role", "tab");
+  t.textContent = GALLERIES[k].title;
+  t.addEventListener("click", function () { showCat(k, true); });
+  tabs.appendChild(t);
+});
+tabs.addEventListener("keydown", function (e) {
+  var i = ORDER.indexOf(current);
+  if (e.key === "ArrowRight") { showCat(ORDER[(i + 1) % 4], true); $("tab-" + current).focus(); }
+  if (e.key === "ArrowLeft") { showCat(ORDER[(i + 3) % 4], true); $("tab-" + current).focus(); }
+});
+
+/* Same column count the old CSS gave: up to 3 columns at least 260px wide, 2 on phones. */
+function colCount() {
+  if (matchMedia("(max-width: 760px)").matches) return 2;
+  return Math.max(1, Math.min(3, Math.floor(($("gallery").clientWidth + 20) / 280)));
+}
+function fillGallery(k) {
+  var gal = $("gallery"), g = GALLERIES[k], n = colCount();
+  var cols = [], heights = [];
+  for (var c = 0; c < n; c++) {
+    var col = document.createElement("div"); col.className = "col";
+    cols.push(col); heights.push(0);
+  }
+  gal.replaceChildren.apply(gal, cols);
+  gal.dataset.cols = n;
+  g.photos.forEach(function (p, i) {
+    var fig = document.createElement("figure"); fig.className = "tile";
+    var b = document.createElement("button"); b.type = "button";
+    b.setAttribute("aria-label", "View " + (p.caption || "photograph"));
+    var fr = document.createElement("div"); fr.className = "frame";
+    photo(p, k, i, RATIOS[i % RATIOS.length], fr);
+    var cap = document.createElement("span"); cap.className = "cap label"; cap.textContent = p.caption || "";
+    b.appendChild(fr); b.appendChild(cap);
+    b.addEventListener("click", function () { openLb(k, i); });
+    fig.appendChild(b);
+    /* Each photo goes in the shortest column, judged by its frame's proportions. */
+    var r = RATIOS[i % RATIOS.length], s = heights.indexOf(Math.min.apply(null, heights));
+    cols[s].appendChild(fig); heights[s] += r[1] / r[0];
+  });
+  gal.setAttribute("aria-labelledby", "tab-" + k);
+  $("cat-line").textContent = g.line;
+  $("cat-count").textContent = pad(g.photos.length) + " frames";
+  var ci = $("cat-inquire");
+  ci.textContent = "Inquire about " + g.title.toLowerCase();
+  ci.dataset.cat = k;
+}
+function showCat(k, animate) {
+  if (k === current && animate) return;
+  current = k;
+  ORDER.forEach(function (o) {
+    var t = $("tab-" + o);
+    t.setAttribute("aria-selected", o === k ? "true" : "false");
+    t.tabIndex = o === k ? 0 : -1;
+    if (o === k && animate && t.scrollIntoView) t.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  });
+  var gal = $("gallery");
+  if (!animate || matchMedia("(prefers-reduced-motion: reduce)").matches) { fillGallery(k); return; }
+  gal.classList.add("fading");
+  setTimeout(function () { fillGallery(k); gal.classList.remove("fading"); }, 300);
+}
+showCat("events", false);
+
+/* On the live site, photos come from the website bucket in Backblaze (folders events, couples,
+   fashion, boudoir; see api/portfolio.js). Anywhere else the GALLERIES list above is used. */
+if (location.protocol.indexOf("http") === 0) {
+  fetch("/api/portfolio").then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.connected || !d.galleries) return;
+    var any = false;
+    ORDER.forEach(function (k) {
+      var list = d.galleries[k];
+      if (list && list.length) { GALLERIES[k].photos = list; any = true; }
+    });
+    if (!any) return;
+    var hero = d.hero || (GALLERIES[HERO.cat].photos[0] && { src: GALLERIES[HERO.cat].photos[0].src, caption: GALLERIES[HERO.cat].photos[0].caption });
+    if (hero) {
+      HERO.src = hero.src; HERO.caption = hero.caption || "";
+      photo(HERO, HERO.cat, 99, [4, 5], $("hero-frame"), true);
+      $("hero-cap").textContent = HERO.caption;
+    }
+    fillGallery(current);
+  }).catch(function () {});
+}
+addEventListener("resize", function () {
+  if (+$("gallery").dataset.cols !== colCount()) fillGallery(current);
+});
+
+/* ---------- Lightbox ---------- */
+var lb = $("lb"), lbCat = null, lbI = 0, lastFocus = null;
+function showLb() {
+  var g = GALLERIES[lbCat], p = g.photos[lbI];
+  var fr = document.createElement("div"); fr.className = "frame";
+  photo(p, lbCat, lbI, RATIOS[lbI % RATIOS.length], fr, true);
+  $("lb-stage").replaceChildren(fr);
+  $("lb-title").textContent = g.title + "   " + pad(lbI + 1) + " / " + pad(g.photos.length);
+  $("lb-cap").textContent = (p.caption || "") + (matchMedia("(max-width: 760px)").matches ? "   ·   Swipe" : "");
+}
+function openLb(k, i) { lastFocus = document.activeElement; lbCat = k; lbI = i; lb.hidden = false; document.body.style.overflow = "hidden"; showLb(); $("lb-close").focus(); }
+function closeLb() { lb.hidden = true; document.body.style.overflow = ""; if (lastFocus) lastFocus.focus(); }
+function stepLb(d) { var n = GALLERIES[lbCat].photos.length; lbI = (lbI + d + n) % n; showLb(); }
+$("lb-close").addEventListener("click", closeLb);
+$("lb-prev").addEventListener("click", function () { stepLb(-1); });
+$("lb-next").addEventListener("click", function () { stepLb(1); });
+
+/* ---------- Inquiry journey ---------- */
+var TYPES = {
+  events: "Galas, launches, parties, corporate",
+  couples: "Engagements, weddings, elopements",
+  fashion: "Editorial, lookbook, campaign",
+  boudoir: "Private, intimate portraiture"
+};
+var DETAILS = {
+  events: {
+    title: "Tell me about the <em>event.</em>",
+    help: "A rough idea is fine. We can refine everything in the quote.",
+    fields: [
+      { id: "eventType", label: "Type of event", options: ["Corporate", "Gala or party", "Launch", "Birthday", "Other"] },
+      { id: "guests", label: "Guests", options: ["Under 50", "50 to 150", "150 to 300", "300+"] },
+      { id: "coverage", label: "Coverage", options: ["2 hours", "4 hours", "6 hours", "Full day"] }
+    ]
+  },
+  couples: {
+    title: "What's the <em>occasion?</em>",
+    help: "Congratulations. Tell me a little and I'll shape the coverage around it.",
+    fields: [
+      { id: "session", label: "Session", options: ["Engagement", "Wedding", "Elopement", "Anniversary", "Portraits"] },
+      { id: "coverage", label: "Coverage", options: ["1 hour", "Half day", "Full day"] }
+    ]
+  },
+  fashion: {
+    title: "What's the <em>project?</em>",
+    help: "Usage affects licensing, so let me know where the images will run.",
+    fields: [
+      { id: "purpose", label: "Project", options: ["Editorial", "Lookbook", "Campaign", "Model portfolio"] },
+      { id: "looks", label: "Number of looks", options: ["1 to 5", "6 to 10", "11 to 20", "20+"] },
+      { id: "usage", label: "Where the images will run", options: ["Portfolio", "Social", "Commercial or print"] }
+    ]
+  },
+  boudoir: {
+    title: "What kind of <em>session?</em>",
+    help: "Every boudoir session is a closed set. Your images are never shared without your written consent.",
+    fields: [
+      { id: "style", label: "Style", options: ["Classic", "Fine art", "Bridal gift", "Couples"] },
+      { id: "hmu", label: "Hair and makeup", options: ["Yes, include it", "No, I'll arrive ready"] }
+    ]
+  }
+};
+
+var BLANK = { type: "", details: {}, date: "", flexible: false, location: "", budget: "", vision: "", name: "", email: "", phone: "", updates: true };
+var A = JSON.parse(JSON.stringify(BLANK));
+var step = 0, done = false, sending = false;
+var STEPS = ["type", "details", "when", "budget", "contact"];
+try { var saved = JSON.parse(localStorage.getItem("gsp-inquiry") || "null"); if (saved && typeof saved === "object") A = Object.assign(A, saved); } catch (e) {}
+function save() { try { localStorage.setItem("gsp-inquiry", JSON.stringify(A)); } catch (e) {} }
+
+var flow = $("flow"), form = $("flow-form"), flowReturn = null;
+
+function chipGroup(id, label, options, value, big) {
+  var h = '<fieldset class="field"><legend class="label">' + esc(label) + '</legend><div class="' + (big ? "cards" : "chips") + '">';
+  options.forEach(function (o, i) {
+    var val = big ? o.key : o;
+    h += '<label class="choice ' + (big ? "card" : "chip") + '"><input type="radio" name="' + id + '" id="f-' + id + '-' + i + '" value="' + esc(val) + '"' + (value === val ? " checked" : "") + '>' +
+      (big ? '<span><b>' + esc(o.title) + '</b><small>' + esc(o.sub) + '</small></span>' : '<span>' + esc(o) + '</span>') + '</label>';
+  });
+  return h + '</div></fieldset>';
+}
+function textField(id, label, type, value, extra, full) {
+  return '<div class="field' + (full ? " full" : "") + '"><label class="label" for="f-' + id + '">' + esc(label) + '</label>' +
+    (type === "textarea"
+      ? '<textarea class="text" id="f-' + id + '" name="' + id + '" ' + (extra || "") + '>' + esc(value) + '</textarea>'
+      : '<input class="text" type="' + type + '" id="f-' + id + '" name="' + id + '" value="' + esc(value) + '" ' + (extra || "") + '>') +
+    '</div>';
+}
+
+function renderStep() {
+  var id = STEPS[step], h = "";
+  $("flow-count").textContent = done ? "Sent" : "Step " + (step + 1) + " of " + STEPS.length;
+  $("flow-bar").style.width = (done ? 100 : (step / STEPS.length) * 100) + "%";
+
+  if (done) {
+    h = '<div class="q"><div class="q-head"><span class="label muted">Inquiry received</span>' +
+      '<h2 tabindex="-1">Thank you, <em>' + esc(A.name.split(" ")[0]) + '.</em></h2>' +
+      '<p>Your inquiry is in. I\'ll review the details and email a personal quote to <b style="color:var(--white);font-weight:400">' + esc(A.email) + '</b> within 48 hours.</p></div>' +
+      summary() +
+      '<div class="q-actions"><span></span><button type="button" class="btn solid" id="flow-finish">Back to the site</button></div></div>';
+    form.innerHTML = h;
+    $("flow-finish").addEventListener("click", function () { resetFlow(); closeFlow(); });
+    form.querySelector("h2").focus();
+    return;
+  }
+
+  if (id === "type") {
+    h += head("Let's begin", "What are we <em>shooting?</em>", "Choose the closest fit. You can add more in your notes.");
+    h += chipGroup("type", "Category", ORDER.map(function (k) { return { key: k, title: GALLERIES[k].title, sub: TYPES[k] }; }), A.type, true);
+  } else if (id === "details") {
+    var d = DETAILS[A.type];
+    h += head(GALLERIES[A.type].title, d.title, d.help);
+    d.fields.forEach(function (f) { h += chipGroup(f.id, f.label, f.options, A.details[f.id]); });
+  } else if (id === "when") {
+    h += head("Date and place", "When and <em>where?</em>", "I'm booking in New York for now. If the date isn't set yet, tick flexible.");
+    h += '<div class="inputs">' +
+      textField("date", "Date", "date", A.date) +
+      textField("location", "Venue or neighborhood in New York (optional)", "text", A.location, 'placeholder="e.g. DUMBO, Brooklyn"') +
+      '<label class="check full"><input type="checkbox" id="f-flexible" name="flexible"' + (A.flexible ? " checked" : "") + '> My date is flexible</label>' +
+      '</div>';
+  } else if (id === "budget") {
+    h += head("Investment", "Budget and <em>vision</em>", "Your budget helps me suggest the right coverage. It's never shared.");
+    h += chipGroup("budget", "Budget", CURRENCY_BUDGETS, A.budget);
+    h += '<div class="inputs">' + textField("vision", "Anything I should know (optional)", "textarea", A.vision, 'placeholder="Mood, references, must-have shots, the story behind it"', true) + '</div>';
+  } else if (id === "contact") {
+    h += head("Last step", "Where should I send <em>your quote?</em>", "I'll reply personally within 48 hours. No spam, ever.");
+    h += '<div class="inputs">' +
+      textField("name", "Your name", "text", A.name, 'autocomplete="name" placeholder="First and last name"') +
+      textField("email", "Email", "email", A.email, 'autocomplete="email" inputmode="email" placeholder="you@example.com"') +
+      textField("phone", "Phone (optional)", "tel", A.phone, 'autocomplete="tel" placeholder="For quick questions"') +
+      '<label class="check full"><input type="checkbox" id="f-updates" name="updates"' + (A.updates ? " checked" : "") + '> Also send me open dates and new work, a few times a year.</label>' +
+      '</div>';
+  }
+  var last = step === STEPS.length - 1;
+  h += '<p class="error" id="flow-error" role="alert"></p>';
+  h += '<div class="q-actions">' +
+    (step > 0 ? '<button type="button" class="label back" id="flow-back">← Back</button>' : '<span class="hint">Press Enter to continue</span>') +
+    '<button type="submit" class="btn solid" id="flow-next">' + (last ? "Send my inquiry" : "Continue") + '</button></div>';
+  form.innerHTML = '<div class="q">' + h + '</div>';
+
+  if ($("flow-back")) $("flow-back").addEventListener("click", function () { collect(); step--; renderStep(); });
+  form.querySelectorAll('input[type="radio"]').forEach(function (r) {
+    r.addEventListener("change", function () {
+      collect(); $("flow-error").textContent = "";
+      if (STEPS[step] === "type") setTimeout(next, 260);
+    });
+  });
+  var h2 = form.querySelector("h2"); if (h2) h2.focus({ preventScroll: true });
+}
+function head(eyebrow, title, help) {
+  return '<div class="q-head"><span class="label muted">' + esc(eyebrow) + '</span><h2 tabindex="-1">' + title + '</h2>' + (help ? '<p>' + esc(help) + '</p>' : "") + '</div>';
+}
+function collect() {
+  var f = form;
+  function radio(n) { var el = f.querySelector('input[name="' + n + '"]:checked'); return el ? el.value : ""; }
+  function val(n) { var el = f.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : null; }
+  var id = STEPS[step];
+  if (id === "type") {
+    var t = radio("type");
+    if (t && t !== A.type) { A.type = t; A.details = {}; }
+  } else if (id === "details") {
+    DETAILS[A.type].fields.forEach(function (fl) { var v = radio(fl.id); if (v) A.details[fl.id] = v; });
+  } else if (id === "when") {
+    A.date = val("date"); A.location = val("location"); A.flexible = $("f-flexible").checked;
+  } else if (id === "budget") {
+    A.budget = radio("budget") || A.budget; A.vision = val("vision");
+  } else if (id === "contact") {
+    A.name = val("name"); A.email = val("email"); A.phone = val("phone"); A.updates = $("f-updates").checked;
+  }
+  save();
+}
+/* New York is the only location for now; the field adds the venue or neighborhood. */
+function placeText() { return A.location ? "New York · " + A.location : "New York"; }
+function validate() {
+  var id = STEPS[step];
+  if (id === "type" && !A.type) return ["Choose what we're shooting to continue.", null];
+  if (id === "details") {
+    var miss = DETAILS[A.type].fields.filter(function (f) { return !A.details[f.id]; })[0];
+    if (miss) return ["Choose an option for " + miss.label.toLowerCase() + ".", null];
+  }
+  if (id === "when") {
+    if (!A.date && !A.flexible) return ["Pick a date, or tick flexible if it isn't set yet.", "f-date"];
+  }
+  if (id === "budget" && !A.budget) return ["Choose a budget range, or pick 'Not sure yet'.", null];
+  if (id === "contact") {
+    if (!A.name) return ["Add your name so I know who I'm writing to.", "f-name"];
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(A.email)) return ["Enter an email address like name@example.com.", "f-email"];
+  }
+  return null;
+}
+function next() {
+  if (sending) return;
+  collect();
+  var err = validate();
+  if (err) {
+    $("flow-error").textContent = err[0];
+    if (err[1]) $(err[1]).focus();
+    return;
+  }
+  if (step < STEPS.length - 1) { step++; renderStep(); flow.scrollTop = 0; return; }
+  submit();
+}
+function payload() {
+  var p = {
+    _subject: "New " + GALLERIES[A.type].title.toLowerCase() + " inquiry from " + A.name,
+    _replyto: A.email,
+    category: GALLERIES[A.type].title,
+    name: A.name, email: A.email, phone: A.phone || "",
+    date: A.date || "Flexible", date_flexible: A.flexible ? "Yes" : "No",
+    location: placeText(), budget: A.budget, vision: A.vision || "",
+    wants_updates: A.updates ? "Yes" : "No"
+  };
+  DETAILS[A.type].fields.forEach(function (f) { p[f.label] = A.details[f.id] || ""; });
+  return p;
+}
+function submit() {
+  sending = true;
+  var btn = $("flow-next"); btn.disabled = true; btn.textContent = "Sending";
+  var finish = function () { sending = false; done = true; try { localStorage.removeItem("gsp-inquiry"); } catch (e) {} renderStep(); };
+  if (!FORM_ENDPOINT) { setTimeout(finish, 700); return; }
+  fetch(FORM_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(payload())
+  }).then(function (res) {
+    if (!res.ok) throw new Error(res.status);
+    finish();
+  }).catch(function () {
+    sending = false; btn.disabled = false; btn.textContent = "Send my inquiry";
+    $("flow-error").textContent = "Your inquiry didn't send. Check your connection and try again, or email " + CONTACT.email + ".";
+  });
+}
+function summary() {
+  var rows = [["Category", GALLERIES[A.type].title]];
+  DETAILS[A.type].fields.forEach(function (f) { rows.push([f.label, A.details[f.id]]); });
+  rows.push(["Date", A.date ? new Date(A.date + "T12:00").toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) + (A.flexible ? " (flexible)" : "") : "Flexible"]);
+  rows.push(["Location", placeText()], ["Budget", A.budget]);
+  if (A.vision) rows.push(["Notes", A.vision]);
+  return '<dl class="summary">' + rows.map(function (r) { return '<dt class="label">' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join("") + '</dl>';
+}
+function resetFlow() { A = JSON.parse(JSON.stringify(BLANK)); step = 0; done = false; }
+
+form.addEventListener("submit", function (e) { e.preventDefault(); next(); });
+form.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "BUTTON") { e.preventDefault(); next(); }
+});
+
+function openFlow(cat) {
+  flowReturn = document.activeElement;
+  if (done) resetFlow();
+  if (cat && GALLERIES[cat]) {
+    if (A.type !== cat) { A.type = cat; A.details = {}; }
+    step = 1;
+  } else if (A.type) {
+    // resume a saved draft where the answers stop
+    step = 1;
+  } else step = 0;
+  flow.hidden = false; document.body.style.overflow = "hidden";
+  renderStep();
+}
+function closeFlow() {
+  flow.hidden = true; document.body.style.overflow = "";
+  if (location.hash === "#inquire") history.replaceState(null, "", location.pathname + location.search);
+  if (flowReturn && flowReturn.focus) flowReturn.focus();
+}
+$("flow-close").addEventListener("click", closeFlow);
+document.querySelectorAll("[data-inquire]").forEach(function (a) {
+  a.addEventListener("click", function (e) { e.preventDefault(); openFlow(a.dataset.cat); });
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  if (!lb.hidden) {
+    if (e.key === "Escape") closeLb();
+    if (e.key === "ArrowRight") stepLb(1);
+    if (e.key === "ArrowLeft") stepLb(-1);
+  } else if (!flow.hidden && e.key === "Escape") closeFlow();
+});
+
+/* ---------- Opening quote ---------- */
+var intro = $("intro"), introDone = false;
+function finishIntro(instant) {
+  if (introDone) return;
+  introDone = true;
+  try { sessionStorage.setItem("gsp-intro", "1"); } catch (e) {}
+  document.body.classList.remove("opening");
+  if (instant) { intro.remove(); return; }
+  document.body.classList.add("revealed");
+  intro.classList.add("out");
+  setTimeout(function () { intro.remove(); }, 1200);
+}
+(function runIntro() {
+  var seen = false;
+  try { seen = !!sessionStorage.getItem("gsp-intro"); } catch (e) {}
+  if (seen || location.hash === "#inquire") { finishIntro(true); return; }
+  document.body.classList.add("opening");
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var words = INTRO.quote.split(" "), q = $("intro-quote"), t = 0.35;
+  words.forEach(function (w, i) {
+    var sp = document.createElement("span"); sp.className = "w";
+    var italic = /\*/.test(w);
+    w = w.replace(/\*/g, "");
+    if (italic) { var em = document.createElement("em"); em.textContent = w; sp.appendChild(em); } else sp.textContent = w;
+    sp.style.animationDelay = (t + i * 0.13) + "s";
+    q.appendChild(sp);
+    if (i < words.length - 1) q.appendChild(document.createTextNode(" "));
+  });
+  var end = t + words.length * 0.13 + 0.5;
+  $("intro-rule").style.animationDelay = end + "s";
+  $("intro-by").style.animationDelay = (end + 0.25) + "s";
+  $("intro-by").textContent = INTRO.by;
+  setTimeout(function () { finishIntro(false); }, reduce ? 2600 : (end + 2.1) * 1000);
+  intro.addEventListener("click", function () { finishIntro(false); });
+  addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) finishIntro(false); });
+})();
+
+/* ---------- Phone tab bar ---------- */
+if ("IntersectionObserver" in window) {
+  var secLinks = document.querySelectorAll(".tabbar a[data-sec]");
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      secLinks.forEach(function (a) { a.classList.toggle("on", a.dataset.sec === en.target.id); });
+    });
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  ["work", "process"].forEach(function (id) { io.observe($(id)); });
+  io.observe($("top").querySelector(".hero"));
+}
+
+/* ---------- Swipe in the photo viewer ---------- */
+var sx = 0, sy = 0;
+$("lb-stage").addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+$("lb-stage").addEventListener("touchend", function (e) {
+  var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) stepLb(dx < 0 ? 1 : -1);
+  else if (dy > 90) closeLb();
+}, { passive: true });
+
+if (location.hash === "#inquire") openFlow();
+addEventListener("hashchange", function () { if (location.hash === "#inquire" && flow.hidden) openFlow(); });
+</script>
+</body>
+</html>

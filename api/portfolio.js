@@ -10,10 +10,10 @@ import { siteBucket, send } from "./_lib.js";
 const CATEGORIES = ["events", "couples", "fashion", "boudoir"];
 /* The front-page photo. Set to a file in the bucket (e.g. "fashion/IMG_4821.jpg", or just the
    file name) to choose it; capitals don't matter. Empty means hero.jpg or the hero folder below. */
-const HERO_FILE = "";
+const HERO_FILE = "fashion/DF8A2626.jpg";
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i;
 /* Camera-style names (IMG_1234, DSC_0412) make poor captions, so those get none. */
-const CAMERA = /^(img|dsc|dscf|dscn|_mg|_dsc|gsp|pxl|photo)?[-_ ]?\d+$/i;
+const CAMERA = /^((img|dsc|dscf|dscn|_mg|_dsc|gsp|pxl|photo)?[-_ ]?\d+|[a-z0-9_]{4}\d{4})$/i;
 
 function caption(file) {
   const base = file.replace(/\.[^.]+$/, "");

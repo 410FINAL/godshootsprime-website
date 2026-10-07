@@ -151,6 +151,28 @@ section.block { padding-block: clamp(72px, 10vw, 150px); border-top: 1px solid v
 }
 .gallery-foot { display: flex; justify-content: center; margin-top: clamp(28px, 4vw, 48px); }
 
+/* Category index: the work section opens on a vertical list; a category opens its gallery. */
+.cats { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+.cats li { border-top: 1px solid var(--line); }
+.cat-row {
+  display: grid; grid-template-columns: 56px minmax(0, 1fr) auto 28px; align-items: center; gap: 8px 24px;
+  width: 100%; padding: clamp(22px, 3vw, 36px) 0; text-align: left; color: var(--grey); transition: color .35s var(--ease);
+}
+.cat-row .name {
+  font: 400 clamp(44px, 7vw, 104px)/1 var(--display); letter-spacing: -.02em; color: var(--white);
+  transition: transform .5s var(--ease);
+}
+.cat-row .sub { grid-column: 2; max-width: 52ch; font-size: 15px; }
+.cat-row .arrow { grid-row: 1; grid-column: 4; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.2;
+  transition: transform .5s var(--ease); }
+.cat-row:hover .name, .cat-row:focus-visible .name { transform: translateX(12px); font-style: italic; }
+.cat-row:hover .arrow, .cat-row:focus-visible .arrow { transform: translateX(6px); color: var(--white); }
+.back { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; color: var(--grey); }
+.back svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; }
+.back:hover { color: var(--white); }
+#work.listing .tabs, #work.listing #cat-view, #work.listing .back { display: none; }
+#work:not(.listing) .cats { display: none; }
+
 /* Process */
 .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 64px); }
 .step { display: grid; gap: 16px; align-content: start; border-top: 1px solid var(--dim); padding-top: 24px; }
@@ -357,6 +379,10 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
   .gallery { gap: 6px; margin-inline: calc(var(--gutter) * -1 + 6px); }
   .gallery .col { gap: 6px; }
   .tile .cap { display: none; }
+  .cat-row { grid-template-columns: 34px minmax(0, 1fr) 22px; gap: 6px 14px; }
+  .cat-row .count { grid-column: 2; grid-row: 3; }
+  .cat-row .arrow { grid-column: 3; width: 20px; height: 20px; }
+  .cat-row .sub { font-size: 14px; }
 
   .steps {
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 12px;
@@ -450,19 +476,23 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
     </section>
   </div>
 
-  <section class="block" id="work">
+  <section class="block listing" id="work">
     <div class="wrap">
+      <button type="button" class="back label" id="cat-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg>All categories</button>
       <div class="head">
         <h2>Selected <em>work</em></h2>
         <div class="tabs" role="tablist" aria-label="Categories" id="tabs"></div>
       </div>
-      <div class="cat-intro">
-        <p id="cat-line"></p>
-        <span class="label muted" id="cat-count"></span>
-      </div>
-      <div class="gallery" id="gallery" role="tabpanel"></div>
-      <div class="gallery-foot">
-        <a class="link" href="#inquire" id="cat-inquire" data-inquire>Inquire</a>
+      <ol class="cats" id="cats" aria-label="Categories"></ol>
+      <div id="cat-view">
+        <div class="cat-intro">
+          <p id="cat-line"></p>
+          <span class="label muted" id="cat-count"></span>
+        </div>
+        <div class="gallery" id="gallery" role="tabpanel"></div>
+        <div class="gallery-foot">
+          <a class="link" href="#inquire" id="cat-inquire" data-inquire>Inquire</a>
+        </div>
       </div>
     </div>
   </section>
@@ -791,6 +821,41 @@ function showCat(k, animate) {
 }
 showCat("fashion", false);
 
+/* Category index. Opening one shows its gallery; Back (or the phone's back gesture) returns to the list. */
+var work = $("work");
+function renderCats() {
+  $("cats").replaceChildren.apply($("cats"), ORDER.map(function (k, i) {
+    var g = GALLERIES[k], li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; b.className = "cat-row";
+    b.innerHTML = '<span class="label num">' + pad(i + 1) + '</span><span class="name"></span>' +
+      '<span class="label count"></span><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>' +
+      '<span class="sub"></span>';
+    b.querySelector(".name").textContent = g.title;
+    b.querySelector(".sub").textContent = g.line;
+    b.querySelector(".count").textContent = pad(g.photos.length) + " frames";
+    b.addEventListener("click", function () { openCat(k, true); });
+    li.appendChild(b); return li;
+  }));
+}
+function openCat(k, push) {
+  work.classList.remove("listing");
+  showCat(k, false);
+  if (push) history.pushState({ cat: k }, "", "#work");
+  work.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+function closeCats() {
+  work.classList.add("listing");
+  work.scrollIntoView();
+}
+$("cat-back").addEventListener("click", function () {
+  if (history.state && history.state.cat) history.back(); else closeCats();
+});
+addEventListener("popstate", function (e) {
+  if (e.state && e.state.cat) openCat(e.state.cat, false);
+  else if (!work.classList.contains("listing")) closeCats();
+});
+renderCats();
+
 /* On the live site, photos come from the website bucket in Backblaze (folders events, couples,
    fashion, boudoir; see api/portfolio.js). Anywhere else the GALLERIES list above is used. */
 if (location.protocol.indexOf("http") === 0) {
@@ -809,6 +874,7 @@ if (location.protocol.indexOf("http") === 0) {
       $("hero-cap").textContent = HERO.caption;
     }
     fillGallery(current);
+    renderCats();
   }).catch(function () {});
 }
 addEventListener("resize", function () {

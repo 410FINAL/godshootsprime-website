@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       const files = keys.map(k => k.key).filter(k => IMAGE.test(k) && !/\/_/.test(k.slice(folders[cat].length)))
         .sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
       galleries[cat] = await Promise.all(files.map(async key => ({
-        src: await b.signGet(key, 24 * 3600),
+        src: await b.signGet(key, 7 * 24 * 3600),
         caption: caption(key.split("/").pop())
       })));
     }
@@ -47,15 +47,15 @@ export default async function handler(req, res) {
     if (want) {
       const all = (await b.list("")).keys.map(k => k.key);
       const pick = all.find(k => k.toLowerCase() === want) || all.find(k => k.toLowerCase().endsWith("/" + want));
-      if (pick) hero = { src: await b.signGet(pick, 24 * 3600), caption: caption(pick.split("/").pop()) };
+      if (pick) hero = { src: await b.signGet(pick, 7 * 24 * 3600), caption: caption(pick.split("/").pop()) };
     }
     const heroFile = top.keys.find(k => /^hero\.(jpe?g|png|webp)$/i.test(k.key));
     if (hero) { /* chosen above */ }
-    else if (heroFile) hero = { src: await b.signGet(heroFile.key, 24 * 3600) };
+    else if (heroFile) hero = { src: await b.signGet(heroFile.key, 7 * 24 * 3600) };
     else if (folders.hero) {
       const { keys } = await b.list(folders.hero);
       const first = keys.map(k => k.key).filter(k => IMAGE.test(k)).sort()[0];
-      if (first) hero = { src: await b.signGet(first, 24 * 3600) };
+      if (first) hero = { src: await b.signGet(first, 7 * 24 * 3600) };
     }
 
     /* Cached at Vercel's edge for an hour, so Backblaze is asked at most about once an hour. */

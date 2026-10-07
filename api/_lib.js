@@ -5,7 +5,6 @@ import crypto from "node:crypto";
 import {
   S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const env = process.env;
 
@@ -18,7 +17,7 @@ function endpointUrl(e) { return e && !/^https?:\/\//.test(e) ? "https://" + e :
 
 function makeClient(endpoint, keyId, key) {
   if (!endpoint || !keyId || !key) return null;
-  return new S3Client({
+  const s3 = new S3Client({
     endpoint: endpointUrl(endpoint),
     region: regionOf(endpoint),
     forcePathStyle: true,
@@ -27,6 +26,29 @@ function makeClient(endpoint, keyId, key) {
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED"
   });
+  s3.presignCreds = { endpoint: endpointUrl(endpoint), region: regionOf(endpoint), keyId, key };
+  return s3;
+}
+
+/* Presigned links, signed by hand (SigV4 query string, host header only). The AWS SDK's presigner
+   adds extra query parameters that Backblaze rejects with SignatureDoesNotMatch. */
+const enc = v => encodeURIComponent(v).replace(/[!'()*]/g, c => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+const hmac = (k, v) => crypto.createHmac("sha256", k).update(v).digest();
+export function presign({ endpoint, region, keyId, key }, method, bucketName, objectKey, seconds, extra, now) {
+  const u = new URL(endpoint);
+  const t = (now || new Date()).toISOString().replace(/[-:]|\.\d{3}/g, "");
+  const day = t.slice(0, 8);
+  const scope = `${day}/${region}/s3/aws4_request`;
+  const path = (bucketName ? "/" + enc(bucketName) : "") + "/" + objectKey.split("/").map(enc).join("/");
+  const q = {
+    "X-Amz-Algorithm": "AWS4-HMAC-SHA256", "X-Amz-Credential": `${keyId}/${scope}`, "X-Amz-Date": t,
+    "X-Amz-Expires": String(seconds), "X-Amz-SignedHeaders": "host", ...(extra || {})
+  };
+  const query = Object.keys(q).sort().map(k => enc(k) + "=" + enc(q[k])).join("&");
+  const canonical = [method, path, query, "host:" + u.host + "\n", "host", "UNSIGNED-PAYLOAD"].join("\n");
+  const toSign = ["AWS4-HMAC-SHA256", t, scope, crypto.createHash("sha256").update(canonical).digest("hex")].join("\n");
+  const kSign = hmac(hmac(hmac(hmac("AWS4" + key, day), region), "s3"), "aws4_request");
+  return `${u.protocol}//${u.host}${path}?${query}&X-Amz-Signature=${hmac(kSign, toSign).toString("hex")}`;
 }
 
 export function portalBucket() {
@@ -74,13 +96,11 @@ function bucket(s3, name) {
       return { keys, prefixes };
     },
     signGet(key, seconds, download) {
-      return getSignedUrl(s3, new GetObjectCommand({
-        Bucket: name, Key: key,
-        ResponseContentDisposition: download ? `attachment; filename="${download.replace(/["\\]/g, "")}"` : undefined
-      }), { expiresIn: seconds || 3600 });
+      return Promise.resolve(presign(s3.presignCreds, "GET", name, key, seconds || 3600,
+        download ? { "response-content-disposition": `attachment; filename="${download.replace(/["\\]/g, "")}"` } : null));
     },
     signPut(key, type, seconds) {
-      return getSignedUrl(s3, new PutObjectCommand({ Bucket: name, Key: key, ContentType: type }), { expiresIn: seconds || 900 });
+      return Promise.resolve(presign(s3.presignCreds, "PUT", name, key, seconds || 900));
     }
   };
 }

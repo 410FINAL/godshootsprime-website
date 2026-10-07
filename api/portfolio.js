@@ -8,6 +8,9 @@
 import { siteBucket, send } from "./_lib.js";
 
 const CATEGORIES = ["events", "couples", "fashion", "boudoir"];
+/* The front-page photo. Set to a file in the bucket (e.g. "fashion/IMG_4821.jpg", or just the
+   file name) to choose it; capitals don't matter. Empty means hero.jpg or the hero folder below. */
+const HERO_FILE = "";
 const IMAGE = /\.(jpe?g|png|webp|gif)$/i;
 /* Camera-style names (IMG_1234, DSC_0412) make poor captions, so those get none. */
 const CAMERA = /^(img|dsc|dscf|dscn|_mg|_dsc|gsp|pxl|photo)?[-_ ]?\d+$/i;
@@ -40,8 +43,15 @@ export default async function handler(req, res) {
     }
 
     let hero = null;
+    const want = (process.env.HERO_FILE || HERO_FILE).trim().toLowerCase().replace(/^\/+/, "");
+    if (want) {
+      const all = (await b.list("")).keys.map(k => k.key);
+      const pick = all.find(k => k.toLowerCase() === want) || all.find(k => k.toLowerCase().endsWith("/" + want));
+      if (pick) hero = { src: await b.signGet(pick, 24 * 3600), caption: caption(pick.split("/").pop()) };
+    }
     const heroFile = top.keys.find(k => /^hero\.(jpe?g|png|webp)$/i.test(k.key));
-    if (heroFile) hero = { src: await b.signGet(heroFile.key, 24 * 3600) };
+    if (hero) { /* chosen above */ }
+    else if (heroFile) hero = { src: await b.signGet(heroFile.key, 24 * 3600) };
     else if (folders.hero) {
       const { keys } = await b.list(folders.hero);
       const first = keys.map(k => k.key).filter(k => IMAGE.test(k)).sort()[0];

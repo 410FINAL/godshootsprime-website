@@ -4,7 +4,8 @@
    the site's categories (events, couples, fashion, boudoir; capitals are fine).
    Drop photos into a folder in Backblaze and they appear on the site within the
    hour. An optional "hero" folder, or a file named hero.jpg at the top, sets
-   the big front-page photo. Works whether the bucket is public or private. */
+   the big front-page photo. Works whether the bucket is public or private; photos are
+   served web-sized through /api/img. */
 import { siteBucket, send } from "./_lib.js";
 
 const CATEGORIES = ["events", "couples", "fashion", "boudoir"];
@@ -29,38 +30,43 @@ export default async function handler(req, res) {
     const top = await b.list("", "/");
     const folders = {};
     top.prefixes.forEach(p => { folders[p.replace(/\/$/, "").toLowerCase()] = p; });
+    const lists = {}, version = {};
+    const stamp = keys => keys.forEach(k => { version[k.key] = new Date(k.modified).getTime().toString(36); });
+    stamp(top.keys);
 
-    const galleries = {};
     for (const cat of CATEGORIES) {
       if (!folders[cat]) continue;
       const { keys } = await b.list(folders[cat]);
-      const files = keys.map(k => k.key).filter(k => IMAGE.test(k) && !/\/_/.test(k.slice(folders[cat].length)))
+      stamp(keys);
+      lists[cat] = keys.map(k => k.key).filter(k => IMAGE.test(k) && !/\/_/.test(k.slice(folders[cat].length)))
         .sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
-      galleries[cat] = await Promise.all(files.map(async key => ({
-        src: await b.signGet(key, 7 * 24 * 3600),
-        caption: caption(key.split("/").pop())
-      })));
     }
 
-    let hero = null;
+    let heroKey = null;
     const want = (process.env.HERO_FILE || HERO_FILE).trim().toLowerCase().replace(/^\/+/, "");
     if (want) {
-      const all = (await b.list("")).keys.map(k => k.key);
-      const pick = all.find(k => k.toLowerCase() === want) || all.find(k => k.toLowerCase().endsWith("/" + want));
-      if (pick) hero = { src: await b.signGet(pick, 7 * 24 * 3600), caption: caption(pick.split("/").pop()) };
+      const listed = (await b.list("")).keys;
+      stamp(listed);
+      const all = listed.map(k => k.key);
+      heroKey = all.find(k => k.toLowerCase() === want) || all.find(k => k.toLowerCase().endsWith("/" + want)) || null;
     }
-    const heroFile = top.keys.find(k => /^hero\.(jpe?g|png|webp)$/i.test(k.key));
-    if (hero) { /* chosen above */ }
-    else if (heroFile) hero = { src: await b.signGet(heroFile.key, 7 * 24 * 3600) };
-    else if (folders.hero) {
+    if (!heroKey) heroKey = (top.keys.find(k => /^hero\.(jpe?g|png|webp)$/i.test(k.key)) || {}).key || null;
+    if (!heroKey && folders.hero) {
       const { keys } = await b.list(folders.hero);
-      const first = keys.map(k => k.key).filter(k => IMAGE.test(k)).sort()[0];
-      if (first) hero = { src: await b.signGet(first, 7 * 24 * 3600) };
+      stamp(keys);
+      heroKey = keys.map(k => k.key).filter(k => IMAGE.test(k)).sort()[0] || null;
     }
+
+    /* Photos are served through /api/img, which shrinks the full-size originals to web size. */
+    const link = (k, w) => `/api/img?k=${encodeURIComponent(k)}&w=${w}&v=${version[k] || "0"}`;
+    const item = k => ({ src: link(k, 1200), full: link(k, 2400), caption: caption(k.split("/").pop()) });
+    const galleries = {};
+    for (const cat of Object.keys(lists)) galleries[cat] = lists[cat].map(item);
+    const hero = heroKey ? { ...item(heroKey), src: link(heroKey, 2400) } : null;
 
     /* Cached at Vercel's edge for an hour, so Backblaze is asked at most about once an hour. */
     send(res, 200, { connected: true, hero, galleries }, {
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=82800"
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400"
     });
   } catch (e) {
     console.error(e);

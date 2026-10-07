@@ -82,6 +82,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .bar nav { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); }
 .bar nav a.navlink { color: var(--grey); transition: color .3s; }
 .bar .btn { min-height: 40px; padding: 0 20px; }
+.bar nav .btn + .btn { margin-left: calc(clamp(20px, 3vw, 40px) * -1 + 12px); }
+.bar .btn.portal { border-color: var(--dim); color: var(--grey); }
+.bar .btn.portal:hover { border-color: var(--white); color: var(--black); }
 
 /* Hero */
 .hero {
@@ -335,8 +338,10 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 
 @media (max-width: 760px) {
   body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
-  .bar .wrap { height: 56px; justify-content: center; }
-  .bar nav { display: none; }
+  .bar .wrap { height: 56px; justify-content: space-between; }
+  .bar nav .btn[data-inquire] { display: none; }
+  .bar nav .btn + .btn { margin-left: 0; }
+  .bar .btn.portal { min-height: 32px; padding: 0 12px; font-size: 10px; letter-spacing: .2em; }
   .tabbar {
     display: grid; grid-template-columns: 1fr 1fr 1.25fr; align-items: center; gap: 8px;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
@@ -451,8 +456,8 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
     <nav aria-label="Main">
       <a class="navlink label" href="#work">Work</a>
       <a class="navlink label" href="#process">Booking</a>
-      <a class="navlink label" href="client.html">Clients</a>
       <a class="btn" href="#inquire" data-inquire>Inquire</a>
+      <a class="btn portal" href="client.html">Client Portal</a>
     </nav>
   </div>
 </header>
@@ -533,7 +538,7 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 <footer>
   <div class="wrap label">
     <span>© 2026 GODSHOOTSPRIME</span>
-    <a href="client.html">Client login</a>
+    <a href="client.html">Client Portal</a>
     <div class="contact">
       <span id="foot-email"></span>
       <span id="foot-ig"></span>
@@ -741,8 +746,17 @@ function photo(item, cat, seed, ratio, host, keepRatio) {
     if (!keepRatio) host.style.aspectRatio = img.naturalWidth + " / " + img.naturalHeight;
     if (ph.parentNode === host) host.replaceChild(img, ph);
   };
-  img.src = item.src;
+  /* Gallery tiles load as they come near the screen; the hero and the viewer load at once. */
+  if (keepRatio || !lazyIo) img.src = item.src;
+  else { host._load = function () { img.src = item.src; }; lazyIo.observe(host); }
 }
+var lazyIo = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) {
+    if (!e.isIntersecting) return;
+    lazyIo.unobserve(e.target);
+    if (e.target._load) { e.target._load(); e.target._load = null; }
+  });
+}, { rootMargin: "800px 0px" }) : null;
 
 /* ---------- Hero, footer ---------- */
 photo(HERO, HERO.cat, 99, [4, 5], $("hero-frame"), true);
@@ -886,7 +900,7 @@ var lb = $("lb"), lbCat = null, lbI = 0, lastFocus = null;
 function showLb() {
   var g = GALLERIES[lbCat], p = g.photos[lbI];
   var fr = document.createElement("div"); fr.className = "frame";
-  photo(p, lbCat, lbI, RATIOS[lbI % RATIOS.length], fr, true);
+  photo({ src: p.full || p.src, caption: p.caption }, lbCat, lbI, RATIOS[lbI % RATIOS.length], fr, true);
   $("lb-stage").replaceChildren(fr);
   $("lb-title").textContent = g.title + "   " + pad(lbI + 1) + " / " + pad(g.photos.length);
   $("lb-cap").textContent = (p.caption || "") + (matchMedia("(max-width: 760px)").matches ? "   ·   Swipe" : "");

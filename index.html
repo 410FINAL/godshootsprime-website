@@ -313,7 +313,6 @@ input[type="date"].text { color-scheme: dark; }
 /* GOD, SHOOTS, PRIME come up one line at a time, then the site slowly fades in. */
 .intro .words { margin: 0; text-align: center; font: 400 clamp(52px, 11vw, 132px)/1.02 var(--display); letter-spacing: .04em; text-transform: uppercase; }
 .intro .words span { display: block; opacity: 0; animation: rise 1.1s var(--ease) var(--t, 0s) forwards; }
-.intro .skip { position: absolute; right: var(--gutter); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); color: var(--dim); }
 body.opening { overflow: hidden; }
 body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
 body.revealed .hero-frame { animation-delay: .15s; }
@@ -443,7 +442,6 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
     <span style="--t:1.1s">Shoots</span>
     <span style="--t:1.9s">Prime</span>
   </p>
-  <button type="button" class="skip label" id="intro-skip">Skip</button>
 </div>
 
 <header class="bar" id="bar">

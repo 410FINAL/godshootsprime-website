@@ -605,7 +605,7 @@ function renderHome() {
   var app = $("app");
   app.innerHTML = '<div class="wrap page">' +
     '<div class="page-head"><h1>Client <em>folders</em></h1><div class="actions"><button class="btn solid" type="button" id="new-btn">New folder</button></div></div>' +
-    PREVIEW_NOTE + pageTabs("home") +
+    (GS.mode === "remote" ? "" : PREVIEW_NOTE) + pageTabs("home") +
     '<form class="newrow" id="new-row" hidden><label class="field" style="flex:1"><span class="label">Client or event name</span>' +
     '<input class="text" id="new-name" placeholder="e.g. Sofia & Marc, or the Ashford Gala" autocomplete="off"></label>' +
     '<button class="btn solid" type="submit">Create folder</button></form>' +

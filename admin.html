@@ -211,6 +211,17 @@ input[type="date"].text { color-scheme: dark; }
 .drop .phone { display: none; }
 @media (hover: none) { .drop .desk { display: none; } .drop .phone { display: inline; } }
 .queue { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+/* While uploading, the progress box floats in the lower right so it stays in view while you scroll. */
+.queue.float {
+  position: fixed; right: 24px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 70; width: min(360px, calc(100% - 32px));
+  border: 1px solid var(--dim); background: var(--lift); padding: 18px 20px; box-shadow: 0 18px 50px rgba(0, 0, 0, .6);
+  animation: rise .35s var(--ease);
+}
+.queue .big { font: 400 34px/1 var(--display); color: var(--white); font-variant-numeric: tabular-nums; }
+.queue .big small { font: 300 14px/1 var(--sans); color: var(--grey); margin-left: 8px; }
+.queue .pct { font-size: 13px; color: var(--grey); font-variant-numeric: tabular-nums; }
+body.uploading .toast { bottom: calc(220px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 760px) { .queue.float { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); } }
 .qrow { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; font-size: 14px; color: var(--grey); }
 .qrow b { color: var(--white); font-weight: 400; }
 .qrow .nums { font-variant-numeric: tabular-nums; }
@@ -586,7 +597,7 @@ addEventListener("hashchange", function (e) {
 addEventListener("beforeunload", function (e) { if (uploads && uploads.busy()) { e.preventDefault(); e.returnValue = ""; } });
 function route() {
   var h = decodeURIComponent(location.hash.slice(1));
-  openFolder = null; dropTarget = null; uploads = null;
+  openFolder = null; dropTarget = null; uploads = null; document.body.classList.remove("uploading");
   scrollTo(0, 0);
   if (h === "settings") return renderSettings();
   if (h) return GS.getClient(h).then(function (c) { c ? renderFolder(c) : (location.hash = ""); });
@@ -681,6 +692,11 @@ function renderFolder(c) {
         '<button class="btn small" type="button" id="copy-pw">Copy</button></div>' +
         '<small>Each folder needs its own password. Send it to your client with the gallery link.</small></label>' +
       '<p class="error" id="pw-err"></p>' +
+      '<div class="field"><span class="label">Client gallery link</span>' +
+        '<div class="sharebox"><input id="client-url" readonly aria-label="Client gallery link">' +
+        '<button class="btn small" type="button" id="copy-link">Copy link</button></div>' +
+        '<button class="link" type="button" id="copy-invite" style="justify-self:start">Copy link and password as a message</button>' +
+        '<small>Password protected: it opens a sign-in page that greets them by name, then asks for this folder\'s password (or Google sign-in).</small></div>' +
       '<label class="field"><span class="label">Client emails for Google sign-in</span>' +
         '<input class="text" id="emails" type="text" inputmode="email" autocomplete="off" spellcheck="false" placeholder="amara@gmail.com, jon@gmail.com" value="' + esc((c.emails || []).join(", ")) + '">' +
         '<small>Anyone signing in with Google using one of these emails opens this gallery. Separate several with commas.</small></label>' +
@@ -749,7 +765,8 @@ function renderFolder(c) {
         '<b><span class="desk">Drag photos here</span><span class="phone">Add photos</span></b>' +
         '<span class="or"><span class="desk">or <u>choose files</u>. Whole folders work too.</span><span class="phone">Tap to pick from your camera roll or Files.</span></span>' +
         '<span class="to label" id="drop-to"></span></label>' +
-      '<div class="queue" id="up-queue" hidden>' +
+      '<div class="queue float" id="up-queue" role="status" hidden>' +
+        '<div class="qrow"><span class="big" id="q-count"></span><span class="pct" id="q-pct"></span></div>' +
         '<div class="qrow"><span id="q-text"></span><span class="nums" id="q-size"></span></div>' +
         '<div class="qbar"><i id="q-bar"></i></div>' +
         '<div class="qrow"><div class="chips" id="q-chips"></div><button class="btn small quiet" type="button" id="q-stop">Stop uploading</button></div>' +
@@ -823,6 +840,14 @@ function renderFolder(c) {
     checkPassword();
   });
   $("copy-pw").addEventListener("click", function () { copy(c.password, app.querySelector('[data-k="password"]')); });
+  var clientUrl = function () { return new URL("client.html?for=" + encodeURIComponent(c.name || ""), location.href).href; };
+  var paintLink = function () { $("client-url").value = clientUrl(); };
+  paintLink();
+  app.addEventListener("input", function (e) { if (e.target.dataset && e.target.dataset.k === "name") paintLink(); });
+  $("copy-link").onclick = function () { copy(clientUrl(), $("client-url")); };
+  $("copy-invite").onclick = function () {
+    copy("Hi " + (c.name || "") + ", your photos are ready.\n\nOpen your gallery: " + clientUrl() + "\nPassword: " + c.password);
+  };
 
   /* Timer and limits */
   $("timer").addEventListener("change", function () { c.timer = this.checked; paintStatus(); persist(); });
@@ -1049,8 +1074,8 @@ function renderFolder(c) {
     st.hidden = !p.pending;
     var bar = st.querySelector("b");
     f.title = p.state === "failed" ? p.error || "" : "";
-    if (p.state === "failed") { st.firstChild.textContent = "Didn't upload · tap to retry"; bar.style.width = "0"; }
-    else if (p.state === "wait") { st.firstChild.textContent = p.folder === "auto" ? "Reading camera" : "Waiting"; bar.style.width = "0"; }
+    if (p.state === "failed") { st.firstChild.textContent = "Didn't upload after " + (p.tries || 1) + (p.tries > 1 ? " tries" : " try") + " · tap to retry"; bar.style.width = "0"; }
+    else if (p.state === "wait") { st.firstChild.textContent = p.tries ? "Trying again" : p.folder === "auto" ? "Reading camera" : "Waiting"; bar.style.width = "0"; }
     else if (p.state === "up") {
       var pc = Math.min(99, Math.floor((p.sent || 0) * 100));
       st.firstChild.textContent = pc + "%"; bar.style.width = pc + "%";
@@ -1151,7 +1176,7 @@ function renderFolder(c) {
     var b = startBatch(p.section, p.folder);
     if (p.batch === b) b.failed--; else b.total++;
     b.bytes += p.size;
-    p.batch = b; p.state = "wait"; p.sent = 0;
+    p.batch = b; p.state = "wait"; p.sent = 0; p.tries = 0;
     queue.push(p);
     paintTile(p); paintQueue(); pump();
   }
@@ -1187,22 +1212,32 @@ function renderFolder(c) {
       if (ctl.stopped) return;
       p.state = "failed"; p.sent = 0; delete p.ctl;
       p.error = b.error = (e && e.message) || "Upload failed";
+      p.tries = (p.tries || 0) + 1;
       b.failed++; b.bytes -= p.size;
     }).then(function () {
       active--;
       if (b === batch) { paintTile(p); paintPhotoTabs(); paintQueue(); }
-      if (batch && !queue.length && !active) wrapUp(false); else pump();
+      if (batch && !queue.length && !active) retryOrWrap(); else pump();
     });
+  }
+  /* When the rest are done, photos that failed try again on their own, up to three tries in all. */
+  var TRIES = 3;
+  function retryOrWrap() {
+    var b = batch, again = photos.filter(function (p) { return p.batch === b && p.state === "failed" && (p.tries || 0) < TRIES; });
+    if (!again.length) return wrapUp(false);
+    again.forEach(function (p) { p.state = "wait"; p.sent = 0; b.failed--; b.bytes += p.size; queue.push(p); paintTile(p); });
+    paintQueue();
+    setTimeout(function () { if (batch === b) pump(); }, 2000);
   }
   /* b.made holds folder ids; names are looked up when shown, so a rename mid-upload reads right. */
   function madeNames(b) { return b.made.map(folderById).filter(Boolean).map(function (f) { return f.name; }); }
   function wrapUp(stopped) {
     var b = batch; batch = null;
-    $("up-queue").hidden = true;
+    $("up-queue").hidden = true; document.body.classList.remove("uploading");
     var t = (stopped ? "Stopped. " : "") + plural(b.done, "photo") + " added" + (b.section ? " to " + titleOf(b.section) : "");
     var made = madeNames(b);
     if (made.length) t += " · new folder" + (made.length > 1 ? "s " : " ") + made.join(", ");
-    if (b.failed > 0) t += " · " + b.failed + " didn't upload: " + b.error;
+    if (b.failed > 0) t += " · " + b.failed + " still didn't upload after " + TRIES + " tries: " + b.error;
     var skip = [];
     if (b.dup) skip.push(b.dup + " already there");
     if (b.other) skip.push(plural(b.other, "file") + " not a photo");
@@ -1217,14 +1252,17 @@ function renderFolder(c) {
     $("up-queue").hidden = false;
     var flying = photos.reduce(function (s, p) { return s + (p.batch === b && p.state === "up" ? (p.sent || 0) * p.size : 0); }, 0);
     var into = b.folder === "auto" ? ", sorting by camera" : folderById(b.folder) ? " › " + esc(folderById(b.folder).name) : "";
-    $("q-text").innerHTML = "Uploading" + (b.section ? " to " + titleOf(b.section) : "") + into + " · <b>" + b.done + " of " + b.total + "</b> done";
+    document.body.classList.add("uploading");
+    $("q-count").innerHTML = b.done + " of " + b.total + "<small>uploaded</small>";
+    $("q-text").innerHTML = "To " + (b.section ? titleOf(b.section) : "this gallery") + into;
     var sent = Math.min(b.bytes, flying + b.doneBytes);
+    $("q-pct").textContent = (b.bytes ? Math.floor(sent / b.bytes * 100) : 0) + "%";
     $("q-size").textContent = mb(sent) + " of " + mb(b.bytes);
     $("q-bar").style.width = (b.bytes ? sent / b.bytes * 100 : 0) + "%";
-    var chips = madeNames(b).map(function (n) { return '<span class="chip">New folder: ' + esc(n) + "</span>"; });
+    var chips = [];
     if (b.dup) chips.push('<span class="chip">' + plural(b.dup, "photo") + " already here, skipped</span>");
     if (b.other) chips.push('<span class="chip">' + plural(b.other, "file") + " not a photo, skipped</span>");
-    if (b.failed > 0) chips.push('<span class="chip">' + b.failed + " didn't upload: " + esc(b.error) + "</span>");
+    if (b.failed > 0) chips.push('<span class="chip">' + b.failed + " failed, will try again: " + esc(b.error) + "</span>");
     $("q-chips").innerHTML = chips.join("");
   }
   function mb(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? Math.round(n / 1e6) + " MB" : Math.ceil(n / 1e3) + " KB"; }

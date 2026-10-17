@@ -652,6 +652,12 @@ function showGate() {
   $("gate-label").textContent = S.text.gateLabel;
   $("gate-title").innerHTML = GS.rich(S.text.gateTitle);
   $("gate-line").textContent = S.text.gateLine;
+  /* A client's own link (client.html?for=Name) greets them by name; the password still opens the gallery. */
+  var who = new URLSearchParams(location.search).get("for");
+  if (who) {
+    $("gate-title").innerHTML = "Welcome, <em>" + GS.esc(who.slice(0, 80)) + ".</em>";
+    $("gate-line").textContent = "Enter the password I sent you to open your gallery.";
+  }
   $("gate").hidden = false;
 }
 

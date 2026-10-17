@@ -126,6 +126,7 @@ function cleanPhotoFolders(map, folders) {
   });
   return out;
 }
+const resized = (key, w) => `/api/img?w=${w}&t=${signToken({ k: key }, 6)}`;
 async function listPhotos(b, folder, sections, map) {
   const { keys } = await b.list(`photos/${folder}/`);
   const have = new Set(keys.map(k => k.key));
@@ -136,8 +137,10 @@ async function listPhotos(b, folder, sections, map) {
     const t = `photos/${folder}/${m[1]}/_t/${m[2]}.jpg`, v = `photos/${folder}/${m[1]}/_v/${m[2]}.jpg`;
     out.push({
       id: k.key, clientId: folder, section: m[1], name: m[2], size: k.size, folder: (map || {})[m[1] + "/" + m[2]] || null,
-      thumbUrl: await b.signGet(have.has(t) ? t : k.key, 6 * 3600),
-      viewUrl: await b.signGet(have.has(v) ? v : k.key, 6 * 3600)
+      /* No small copy saved (its preview failed at upload): resize the camera file on the server
+         rather than sending a phone the full ~20 MB original. */
+      thumbUrl: have.has(t) ? await b.signGet(t, 6 * 3600) : resized(k.key, 1200),
+      viewUrl: have.has(v) ? await b.signGet(v, 6 * 3600) : resized(k.key, 2400)
     });
   }
   return out.sort((x, y) => x.name.localeCompare(y.name, undefined, { numeric: true }));

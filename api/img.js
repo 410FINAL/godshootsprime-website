@@ -5,7 +5,7 @@
    and returns a light JPEG. Vercel's edge keeps each result, so a photo is resized once
    and then served from cache. Usage: /api/img?k=Fashion/DF8A2626.jpg&w=1200&v=<version> */
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { siteBucket } from "./_lib.js";
+import { siteBucket, portalBucket, readToken } from "./_lib.js";
 
 const WIDTHS = [480, 1200, 2400];
 
@@ -34,10 +34,13 @@ const IMAGE = /\.(jpe?g|png|webp|gif|tiff?)$/i;
 
 export default async function handler(req, res) {
   const url = new URL(req.url, "http://x");
-  const key = url.searchParams.get("k") || "";
+  /* A client photo comes with a short-lived signed ticket from the portal instead of a public key. */
+  const ticket = url.searchParams.get("t") ? readToken(url.searchParams.get("t")) : null;
+  const priv = !!url.searchParams.get("t");
+  const key = priv ? (ticket && typeof ticket.k === "string" ? ticket.k : "") : url.searchParams.get("k") || "";
   const asked = parseInt(url.searchParams.get("w"), 10) || 1200;
   const width = WIDTHS.find(w => w >= asked) || WIDTHS[WIDTHS.length - 1];
-  const b = siteBucket();
+  const b = priv ? (key.startsWith("photos/") ? portalBucket() : null) : siteBucket();
   if (!b || !IMAGE.test(key) || key.includes("..") || key.startsWith("/")) {
     res.statusCode = 404; return res.end();
   }
@@ -64,7 +67,7 @@ export default async function handler(req, res) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/jpeg");
     /* The link carries a version from the file's upload time, so a replaced photo gets a new link. */
-    res.setHeader("Cache-Control", "public, max-age=604800, s-maxage=31536000, immutable");
+    res.setHeader("Cache-Control", priv ? "private, max-age=21600" : "public, max-age=604800, s-maxage=31536000, immutable");
     res.end(out);
   } catch (e) {
     console.error(key, step, e.name, e.message);

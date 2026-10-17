@@ -221,9 +221,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   background: rgba(0, 0, 0, .9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  transform: translateY(0); transition: transform .4s var(--ease);
+  transform: translateY(0); transition: transform .4s var(--ease), visibility 0s;
 }
-.tray.away { transform: translateY(110%); }
+/* Fully hidden when away; on phones it sits above the tab bar, so sliding down alone left it half in view. */
+.tray.away { transform: translateY(calc(100% + 80px)); visibility: hidden; transition: transform .4s var(--ease), visibility 0s .4s; }
 .tray .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; }
 .tray .count b { font: 400 26px/1 var(--display); color: var(--white); margin-right: 6px; letter-spacing: 0; }
 .tray .count { color: var(--grey); }
@@ -582,14 +583,32 @@ function fmtDate(t) { return new Date(t).toLocaleDateString(undefined, { month: 
 function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 function save() { if (!adminView) GS.saveClient(C); }
 
+/* Grid photos load as they come near the screen and let go once far away, so a big gallery
+   never holds hundreds of decoded photos at once (that is what crashes phones). */
+var near = "IntersectionObserver" in window && new IntersectionObserver(function (es) {
+  es.forEach(function (e) {
+    var img = e.target;
+    if (e.isIntersecting) { if (img.getAttribute("src") !== img.dataset.src) img.src = img.dataset.src; }
+    else if (img.hasAttribute("src")) img.removeAttribute("src");
+  });
+}, { rootMargin: "1500px 0px" });
+
 /* Show the saved photo, or a placeholder study while it has no file. */
 function photo(p, host, full) {
   var u = GS.photoUrl(p, full);
   if (!u) { host.replaceChildren(GS.placeholder(p.name, full ? 1200 : 480)); return; }
   var img = new Image();
-  img.alt = p.name; img.decoding = "async"; if (!full) img.loading = "lazy";
-  img.src = u;
+  img.alt = p.name; img.decoding = "async";
+  if (full || !near) { if (!full) img.loading = "lazy"; img.src = u; }
+  else { img.dataset.src = u; near.observe(img); }
   host.replaceChildren(img);
+}
+/* Drop every photo of the gallery being left, before another one opens. */
+function clearGrids() {
+  if (near) near.disconnect();
+  document.querySelectorAll("#room img").forEach(function (i) { i.removeAttribute("src"); });
+  ["grid-select", "grid-finals", "grid-files"].forEach(function (id) { var g = $(id); if (g) g.replaceChildren(); });
+  $("lb-stage").replaceChildren();
 }
 
 /* ---------- Downloads ---------- */
@@ -682,7 +701,8 @@ $("sign-out").addEventListener("click", function () {
   if (adminView) { location.href = "admin.html"; return; }
   GS.signOut();
   if (guest) { location.href = "index.html"; return; }
-  C = null;
+  C = null; lists = { proofs: [], finals: [], downloads: [] }; folderView = {};
+  clearGrids();
   $("room").hidden = true; $("tabbar").hidden = true; $("tray").classList.add("away");
   document.body.classList.remove("has-tray");
   $("pw").value = ""; $("bar-side").textContent = "Back to site";

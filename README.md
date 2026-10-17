@@ -34,7 +34,8 @@ Clients sign in at `client.html` with their folder's password. Each folder has t
 
 You manage everything at `admin.html` (also linked as "Photographer sign-in" under the client sign-in). The first visit asks you to set an admin password. From there you can:
 - Make a folder per client or event, set its password, shoot details and date.
-- Upload photos into Proofs, Finals and Downloads (drag and drop or choose files).
+- Upload photos into Proofs, Finals and Downloads: drag them (or whole folders) anywhere onto a client's page, or choose files. A drop screen lets you aim at a section, then a folder. Photos go straight to the portal bucket at full size, three at a time, each with its own progress bar; there's a Stop button, photos already in that section are skipped, and one that fails can be tapped to try again.
+- Sort photos into camera folders (Proofs, Finals and Downloads share the same folders). With "Sort new photos by camera" on, each JPEG goes into a folder named after the camera that took it (read from the photo itself), and a new camera gets its own folder. You can also make, rename and delete folders, drop straight into one, or drag a photo onto a folder to move it. Deleting a folder never deletes photos. "Show folders to your client" adds the folders as filters in their gallery.
 - Set how many edits they can select and how many photos they can download.
 - Turn the download timer on or off and set its number of days (counted from the client's first sign-in), restart it, or reopen it.
 - Turn on a share link for events: anyone with the link gets in without a password and sees Finals and Downloads.

@@ -201,6 +201,18 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tile.on .name { color: var(--white); }
 .grid.only-picked .tile:not(.on) { display: none; }
 
+/* Camera folders, when the photographer chooses to show them */
+.fstrip { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 28px; }
+.fchip {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 16px; max-width: 100%;
+  border: 1px solid var(--line); color: var(--grey); font-size: 14px; white-space: nowrap; transition: border-color .2s, color .2s;
+}
+.fchip span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.fchip .n { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.fchip[aria-pressed="true"] { border-color: var(--white); color: var(--white); }
+.fchip[aria-pressed="true"] .n { color: var(--grey); }
+@media (hover: hover) { .fchip:hover { border-color: var(--dim); color: var(--white); } }
+
 .empty { color: var(--grey); border-top: 1px solid var(--line); padding-top: 24px; }
 
 /* Sticky selection tray */
@@ -429,6 +441,7 @@ body.has-tray footer .wrap { padding-bottom: calc(108px + env(safe-area-inset-bo
           <button class="link" type="button" id="only-picked">Show selected</button>
         </div>
       </div>
+      <div class="fstrip" id="fs-select" role="group" aria-label="Camera folders" hidden></div>
       <div class="grid" id="grid-select"></div>
     </section>
     <section class="panel" id="panel-finals" role="tabpanel" hidden>
@@ -439,6 +452,7 @@ body.has-tray footer .wrap { padding-bottom: calc(108px + env(safe-area-inset-bo
         </div>
       </div>
       <div class="notice" id="finals-notice"></div>
+      <div class="fstrip" id="fs-finals" role="group" aria-label="Camera folders" hidden></div>
       <div class="grid" id="grid-finals"></div>
     </section>
     <section class="panel" id="panel-files" role="tabpanel" hidden>
@@ -449,6 +463,7 @@ body.has-tray footer .wrap { padding-bottom: calc(108px + env(safe-area-inset-bo
         </div>
       </div>
       <div class="notice" id="files-notice"></div>
+      <div class="fstrip" id="fs-files" role="group" aria-label="Camera folders" hidden></div>
       <div class="grid" id="grid-files"></div>
     </section>
     <section class="panel" id="panel-contract" role="tabpanel" hidden>
@@ -754,13 +769,14 @@ function show(key) {
 
 function tile(p, i, section, action) {
   var fig = document.createElement("figure"); fig.className = "tile";
+  fig.dataset.folder = p.folder || "";
   fig.style.animationDelay = Math.min(i * 30, 600) + "ms";
   var v = document.createElement("button"); v.type = "button"; v.className = "view";
   v.setAttribute("aria-label", "View " + p.name);
   var fr = document.createElement("div"); fr.className = "frame";
   photo(p, fr);
   v.appendChild(fr);
-  v.addEventListener("click", function () { openLb(section, i); });
+  v.addEventListener("click", function () { openLb(section, p); });
   fig.appendChild(v);
   var meta = document.createElement("div"); meta.className = "meta";
   var nm = document.createElement("span"); nm.className = "name"; nm.textContent = p.name;
@@ -768,6 +784,44 @@ function tile(p, i, section, action) {
   if (action) meta.appendChild(action);
   fig.appendChild(meta);
   return fig;
+}
+
+/* ---------- Camera folders: a row of filters over each section, if the photographer shows them ---------- */
+var folderView = {};
+function sectionList(section) { return lists[TABS.filter(function (t) { return t.key === section; })[0].list]; }
+function buildFolders(section) {
+  var strip = $("fs-" + section), list = sectionList(section);
+  var folders = C.showFolders === false ? [] : (C.folders || []).filter(function (f) { return list.some(function (p) { return p.folder === f.id; }); });
+  var loose = list.filter(function (p) { return !folders.some(function (f) { return f.id === p.folder; }); }).length;
+  /* Only worth showing when the photos are actually split up. */
+  if (!folders.length || folders.length === 1 && !loose) { strip.hidden = true; folderView[section] = null; filterTiles(section); return; }
+  if (folderView[section] && folderView[section] !== "other" && !folders.some(function (f) { return f.id === folderView[section]; })) folderView[section] = null;
+  var chip = function (id, name, n) {
+    return '<button class="fchip" type="button" data-f="' + GS.esc(id) + '" aria-pressed="' + ((folderView[section] || "") === id) + '"><span>' +
+      GS.esc(name) + '</span><span class="n">' + n + "</span></button>";
+  };
+  strip.innerHTML = chip("", "All", list.length) +
+    folders.map(function (f) { return chip(f.id, f.name, list.filter(function (p) { return p.folder === f.id; }).length); }).join("") +
+    (loose ? chip("other", "Other", loose) : "");
+  strip.hidden = false;
+  strip.querySelectorAll("[data-f]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      folderView[section] = b.dataset.f || null;
+      strip.querySelectorAll("[data-f]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      filterTiles(section);
+    });
+  });
+  filterTiles(section);
+}
+function inView(section, p) {
+  var f = folderView[section];
+  if (!f) return true;
+  if (f === "other") return !(C.folders || []).some(function (x) { return x.id === p.folder; });
+  return p.folder === f;
+}
+function filterTiles(section) {
+  var list = sectionList(section);
+  $("grid-" + section).querySelectorAll(".tile").forEach(function (t, i) { t.hidden = !!list[i] && !inView(section, list[i]); });
 }
 
 /* ---------- Select ---------- */
@@ -787,6 +841,7 @@ function buildSelect() {
     fig.querySelector(".view").after(b);
     grid.appendChild(fig);
   });
+  buildFolders("select");
   paintPicks();
 }
 function toggle(name) {
@@ -894,6 +949,7 @@ function buildFinals() {
     a.addEventListener("click", function () { if (finalsOpen()) downloadOne(p); });
     grid.appendChild(tile(p, i, "finals", a));
   });
+  buildFolders("finals");
 }
 
 /* ---------- Downloads: optionally limited to a set number of photos ---------- */
@@ -919,6 +975,7 @@ function buildFiles() {
     a.addEventListener("click", function () { saveFile(p); });
     grid.appendChild(tile(p, i, "files", a));
   });
+  buildFolders("files");
   paintFiles();
 }
 function paintFiles() {
@@ -1093,9 +1150,11 @@ setInterval(function () {
 
 /* ---------- Lightbox ---------- */
 var lbSection = null, lbIndex = 0;
-function lbList() { return lists[TABS.filter(function (t) { return t.key === lbSection; })[0].list]; }
-function openLb(section, i) {
-  lbSection = section; lbIndex = i;
+function lbList() { return sectionList(lbSection).filter(function (p) { return inView(lbSection, p); }); }
+/* which: the photo itself, or its place in the section */
+function openLb(section, which) {
+  lbSection = section;
+  lbIndex = typeof which === "number" ? which : Math.max(0, lbList().indexOf(which));
   $("lb").hidden = false; document.body.style.overflow = "hidden";
   paintLb();
   $("lb-close").focus();

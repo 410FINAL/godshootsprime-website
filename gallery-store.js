@@ -293,14 +293,16 @@
     },
 
     listPhotos: function (clientId, section) {
-      return ready.then(function () { return photosOf(clientId); }).then(function (ps) {
-        return ps.filter(function (p) { return !section || p.section === section; }).sort(byName);
+      return ready.then(function () { return Promise.all([photosOf(clientId), get("clients", clientId)]); }).then(function (r) {
+        var map = (r[1] && r[1].photoFolders) || {};
+        return r[0].filter(function (p) { return !section || p.section === section; })
+          .map(function (p) { p.folder = map[p.section + "/" + p.name] || null; return p; }).sort(byName);
       });
     },
-    addPhoto: function (clientId, section, file) {
+    addPhoto: function (clientId, section, file, ctl) {
       return makeThumb(file).catch(function () { return { thumb: null }; }).then(function (t) {
         var p = { id: uid(), clientId: clientId, section: section, name: file.name, blob: file, thumb: t.thumb, w: t.w, h: t.h };
-        return put("photos", p).then(function () { return p; });
+        return put("photos", p).then(function () { if (ctl && ctl.progress) ctl.progress(1); return p; });
       });
     },
     deletePhoto: function (id) { return del("photos", id); },
@@ -414,20 +416,40 @@
     actAt = Date.now();
     return (act = api("activity"));
   }
-  /* Resized copy for fast grids (900px) and the full-screen viewer (2000px). */
-  function resized(file, max) {
-    return createImageBitmap(file).then(function (bmp) {
-      var k = Math.min(1, max / Math.max(bmp.width, bmp.height));
-      var c = document.createElement("canvas");
-      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-      bmp.close && bmp.close();
-      return new Promise(function (res) { c.toBlob(res, "image/jpeg", 0.84); });
+  /* Previews for fast grids (900px) and the full-screen viewer (2000px), made from one decode.
+     Photos are decoded one at a time, since a 45 MP camera file takes a lot of memory. */
+  var decoding = Promise.resolve();
+  function previews(file) {
+    var job = decoding.then(function () {
+      return createImageBitmap(file).then(function (bmp) {
+        function draw(src, w, h, max) {
+          var k = Math.min(1, max / Math.max(w, h)), c = document.createElement("canvas");
+          c.width = Math.round(w * k); c.height = Math.round(h * k);
+          c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+          return c;
+        }
+        var view = draw(bmp, bmp.width, bmp.height, 2000);
+        bmp.close && bmp.close();
+        var thumb = draw(view, view.width, view.height, 900);
+        var blob = function (c) { return new Promise(function (res) { c.toBlob(res, "image/jpeg", 0.84); }); };
+        return Promise.all([blob(thumb), blob(view)]);
+      });
     });
+    decoding = job.catch(function () {});
+    return job;
   }
-  function putTo(url, blob, type) {
-    return fetch(url, { method: "PUT", headers: { "Content-Type": type }, body: blob }).then(function (r) {
-      if (!r.ok) throw new Error("Upload failed (" + r.status + ")");
+  /* ctl (optional): ctl.progress(fraction) while sending; ctl.abort() is set so the upload can be stopped. */
+  function putTo(url, blob, type, ctl) {
+    return new Promise(function (res, rej) {
+      var x = new XMLHttpRequest();
+      x.open("PUT", url);
+      x.setRequestHeader("Content-Type", type);
+      if (ctl && ctl.progress) x.upload.onprogress = function (e) { if (e.lengthComputable) ctl.progress(e.loaded / e.total); };
+      x.onload = function () { if (x.status >= 200 && x.status < 300) res(); else rej(new Error("Upload failed (" + x.status + ")")); };
+      x.onerror = function () { rej(new Error("Upload failed. Check your connection.")); };
+      x.onabort = function () { rej(new Error("stopped")); };
+      if (ctl) ctl.abort = function () { x.abort(); };
+      x.send(blob);
     });
   }
 
@@ -471,19 +493,19 @@
     newClient: function (name) { return api("newClient", { name: name }).then(remember); },
 
     listPhotos: function (clientId, section) { return api("listPhotos", { clientId: clientId, section: section }); },
-    addPhoto: function (clientId, section, file) {
+    addPhoto: function (clientId, section, file, ctl) {
       var type = file.type || "image/jpeg";
       return Promise.all([
-        resized(file, 900).catch(function () { return null; }),
-        resized(file, 2000).catch(function () { return null; }),
+        previews(file).catch(function () { return [null, null]; }),
         api("uploadUrls", { clientId: clientId, section: section, name: file.name, type: type })
       ]).then(function (r) {
-        var u = r[2], jobs = [putTo(u.original, file, type)];
-        if (r[0]) jobs.push(putTo(u.thumb, r[0], "image/jpeg"));
-        if (r[1]) jobs.push(putTo(u.view, r[1], "image/jpeg"));
+        if (ctl && ctl.stopped) throw new Error("stopped");
+        var pv = r[0], u = r[1], jobs = [putTo(u.original, file, type, ctl)];
+        if (pv[0]) jobs.push(putTo(u.thumb, pv[0], "image/jpeg"));
+        if (pv[1]) jobs.push(putTo(u.view, pv[1], "image/jpeg"));
         return Promise.all(jobs).then(function () {
           return { id: u.id, clientId: clientId, section: section, name: u.name,
-            thumbUrl: URL.createObjectURL(r[0] || file), viewUrl: URL.createObjectURL(r[1] || file) };
+            thumbUrl: URL.createObjectURL(pv[0] || file), viewUrl: URL.createObjectURL(pv[1] || file) };
         });
       });
     },

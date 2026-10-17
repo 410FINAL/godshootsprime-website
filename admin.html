@@ -17,6 +17,7 @@
   --dim: #5c5c5c;
   --line: #222222;
   --lift: #0d0d0d;
+  --raise: #141414;
   --white: #ffffff;
   --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
   --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -168,28 +169,112 @@ input[type="date"].text { color-scheme: dark; }
 .sharebox input:focus { outline: none; }
 
 /* Photos */
-.drop {
-  display: grid; place-items: center; gap: 10px; text-align: center; padding: 34px 20px;
-  border: 1px dashed var(--dim); color: var(--grey); cursor: pointer; transition: border-color .25s, background .25s;
+.cams { display: grid; gap: 12px; border-top: 1px solid var(--line); padding-top: 18px; }
+.cams-head { display: flex; justify-content: space-between; align-items: center; gap: 10px 20px; flex-wrap: wrap; }
+.cams-head .label { color: var(--grey); }
+.cams-acts { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.fstrip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fchip {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 14px; max-width: 100%;
+  border: 1px solid var(--line); background: var(--black); color: var(--grey); font-size: 14px; white-space: nowrap;
+  transition: border-color .2s, color .2s, background .2s;
 }
-.drop.over { border-color: var(--white); background: #111; color: var(--white); }
-.drop b { font: 400 24px/1.2 var(--display); color: var(--ink); }
-.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.fchip span:not(.n) { overflow: hidden; text-overflow: ellipsis; }
+.fchip svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.2; flex: none; }
+.fchip .n { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.fchip[aria-pressed="true"] { border-color: var(--white); color: var(--white); }
+.fchip[aria-pressed="true"] .n { color: var(--grey); }
+.fchip.add { border-style: dashed; border-color: var(--dim); }
+.fchip.catch { border-color: var(--white); background: var(--raise); color: var(--white); }
+.fchip input { width: 15ch; min-width: 0; background: none; border: 0; border-bottom: 1px solid var(--white); color: var(--white); padding: 2px 0; font: 300 14px/1.4 var(--sans); }
+.fchip input:focus { outline: none; }
+.confirm { display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; border: 1px solid var(--dim); padding: 12px 14px; font-size: 14px; color: var(--grey); }
+.confirm b { color: var(--white); font-weight: 400; }
+.confirm .row { display: flex; gap: 10px; flex-wrap: wrap; }
+.switches { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+.switch.mini { justify-content: flex-start; gap: 12px; font-size: 14px; color: var(--grey); }
+.switch.mini i { width: 40px; height: 22px; }
+.switch.mini i::after { width: 14px; height: 14px; }
+.switch.mini input:checked + i::after { transform: translateX(18px); }
+.drop {
+  position: relative; display: grid; justify-items: center; gap: 8px; text-align: center; padding: clamp(28px, 5vw, 44px) 20px;
+  border: 1px dashed var(--dim); color: var(--grey); cursor: pointer; transition: border-color .25s, background .25s, color .25s;
+}
+.drop svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.1; margin-bottom: 6px; }
+.drop b { font: 400 clamp(22px, 2.6vw, 28px)/1.2 var(--display); color: var(--ink); }
+.drop .or { font-size: 14px; }
+.drop .or u { color: var(--ink); text-underline-offset: 4px; text-decoration-color: var(--dim); }
+.drop .to { margin-top: 6px; color: var(--grey); max-width: 100%; text-wrap: balance; }
+.drop .to b { font: inherit; color: var(--white); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.drop:focus-within { border-color: var(--grey); }
+.drop .phone { display: none; }
+@media (hover: none) { .drop .desk { display: none; } .drop .phone { display: inline; } }
+.queue { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+.qrow { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; font-size: 14px; color: var(--grey); }
+.qrow b { color: var(--white); font-weight: 400; }
+.qrow .nums { font-variant-numeric: tabular-nums; }
+.qbar { height: 2px; background: var(--line); }
+.qbar i { display: block; height: 100%; width: 0; background: var(--white); transition: width .2s linear; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { border: 1px solid var(--dim); color: var(--grey); padding: 4px 10px; font-size: 12px; }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-.thumb { position: relative; margin: 0; display: grid; gap: 6px; }
-.thumb .ph { aspect-ratio: 1; background: var(--black); overflow: hidden; }
-.thumb .ph canvas, .thumb .ph img { width: 100%; height: 100%; object-fit: cover; }
-.thumb figcaption { font-size: 12px; color: var(--grey); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumbs .empty { grid-column: 1 / -1; margin: 0; padding: 4px 0; }
+.thumb { position: relative; margin: 0; display: grid; gap: 4px; min-width: 0; }
+.thumb[draggable="true"] { cursor: grab; }
+.thumb.lift { opacity: .4; }
+.thumb.failed { cursor: pointer; }
+.thumb .ph { position: relative; aspect-ratio: 1; background: var(--black); overflow: hidden; }
+.thumb .ph canvas, .thumb .ph img { width: 100%; height: 100%; object-fit: cover; transition: opacity .4s, filter .4s; pointer-events: none; }
+.thumb figcaption { display: grid; min-width: 0; }
+.thumb figcaption span { font-size: 12px; color: var(--grey); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumb figcaption small { font-size: 11px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumb figcaption small:empty { display: none; }
 .thumb .x {
   position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; display: grid; place-items: center;
   background: rgba(0, 0, 0, .7); border: 1px solid var(--dim); font-size: 16px; line-height: 1; color: var(--white);
 }
+.thumb.wait .x, .thumb.up .x { display: none; }
+.thumb .up-state { position: absolute; inset: auto 0 0 0; padding: 0 8px 8px; display: grid; gap: 6px; color: var(--white); }
+.thumb .up-state span { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; font-variant-numeric: tabular-nums; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+.thumb .up-state i { display: block; height: 2px; background: rgba(255, 255, 255, .25); }
+.thumb .up-state i b { display: block; height: 100%; width: 0; background: var(--white); }
+.thumb.failed .up-state i { display: none; }
+.thumb.wait .ph canvas, .thumb.failed .ph canvas { opacity: .35; filter: grayscale(1); }
+.thumb.up .ph canvas { opacity: .6; }
 .thumb.picked .ph { outline: 1px solid var(--white); outline-offset: -1px; }
 .thumb .mark-on { position: absolute; top: 6px; left: 6px; background: var(--white); color: var(--black); padding: 3px 7px; font-size: 9px; letter-spacing: .16em; }
+.thumb.fresh .ph { outline: 1px solid var(--white); outline-offset: -1px; }
+.thumb.fresh .ph::after { content: "Added"; position: absolute; top: 6px; left: 6px; background: var(--white); color: var(--black); padding: 3px 7px; font: 500 9px/1.2 var(--sans); letter-spacing: .16em; text-transform: uppercase; }
 .photohead { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
 .photohead .tabs { margin: 0; border: 0; }
-.bar-progress { height: 1px; background: var(--line); }
-.bar-progress i { display: block; height: 100%; width: 0; background: var(--white); transition: width .3s; }
+
+/* Full-window drop screen: aim at a section, then a folder */
+.dropscreen {
+  position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .97); overflow-y: auto;
+  display: grid; align-content: center; align-content: safe center; justify-items: center; gap: clamp(18px, 3vw, 28px);
+  padding: calc(24px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  animation: fadein .2s var(--ease);
+}
+@keyframes fadein { from { opacity: 0; } }
+.dropscreen .head { text-align: center; display: grid; gap: 10px; }
+.dropscreen h2 { font-size: clamp(32px, 4.6vw, 60px); line-height: 1.05; }
+.dropscreen .count { color: var(--grey); }
+.dropscreen .ds-hint { color: var(--dim); text-align: center; }
+.trow { width: min(100%, 980px); display: grid; gap: 10px; }
+.trow > .label { color: var(--dim); }
+.targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ftargets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 10px; }
+.target {
+  display: grid; gap: 6px; align-content: center; justify-items: center; text-align: center; min-height: clamp(96px, 17vh, 170px); padding: 16px;
+  border: 1px dashed var(--dim); background: var(--black); color: var(--grey); transition: border-color .2s, background .2s, color .2s, transform .25s var(--ease);
+}
+.target b { font: 400 clamp(24px, 2.8vw, 34px)/1.1 var(--display); color: var(--ink); overflow-wrap: anywhere; }
+.target small { font-size: 13px; max-width: 28ch; }
+.target.ft { min-height: 76px; }
+.target.ft b { font-size: clamp(18px, 1.8vw, 22px); }
+.target.on { border-style: solid; border-color: var(--white); background: var(--raise); color: var(--white); transform: scale(1.02); }
+@media (max-width: 640px) { .targets { grid-template-columns: minmax(0, 1fr); } .target { min-height: 72px; } .target small { display: none; } }
 
 .picklist { margin: 0; padding: 0; list-style: none; columns: 3 140px; column-gap: 20px; font-size: 14px; }
 .picklist li { padding: 3px 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
@@ -199,7 +284,7 @@ input[type="date"].text { color-scheme: dark; }
 .toast {
   position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 90;
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
-  background: var(--white); color: var(--black); padding: 14px 22px; max-width: calc(100% - 32px);
+  background: var(--white); color: var(--black); padding: 14px 22px; width: max-content; max-width: calc(100% - 32px); text-align: center;
   transition: opacity .3s var(--ease), transform .3s var(--ease);
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -237,6 +322,7 @@ input[type="date"].text { color-scheme: dark; }
   .folder:hover { background: #080808; }
   .folder:hover .go, .tab:hover, .crumb:hover { color: var(--white); }
   .drop:hover { border-color: var(--grey); }
+  .fchip:hover { border-color: var(--dim); color: var(--white); }
   .thumb .x:hover { background: var(--white); color: var(--black); }
 }
 @media (max-width: 760px) {
@@ -295,6 +381,17 @@ input[type="date"].text { color-scheme: dark; }
 
 <div class="toast label" id="toast" role="status"></div>
 
+<div class="dropscreen" id="dropscreen" hidden>
+  <div class="head">
+    <span class="label count" id="ds-count">Photos</span>
+    <h2>Drop to add to <em id="ds-name"></em></h2>
+  </div>
+  <div class="trow"><span class="label">1 · Section</span><div class="targets" id="ds-sections"></div></div>
+  <div class="trow"><span class="label">2 · Folder</span><div class="ftargets" id="ds-folders"></div></div>
+  <span class="label ds-hint">Move over a section, then a folder. Let go anywhere to use what's lit.</span>
+</div>
+
+
 <script src="gallery-store.js"></script>
 <script>
 var S = null, folderTab = "proofs";
@@ -312,11 +409,11 @@ function toInt(v) { var n = parseInt(String(v).replace(/[^0-9]/g, ""), 10); retu
 function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
 
 var toastTimer;
-function toast(msg) {
+function toast(msg, ms) {
   var t = $("toast");
   t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  toastTimer = setTimeout(function () { t.classList.remove("show"); }, ms || 2600);
 }
 var savedTimer;
 function flashSaved() {
@@ -345,6 +442,96 @@ function randomToken() {
   return Array.from(a).map(function (x) { return (x % 36).toString(36); }).join("");
 }
 function shareUrl(c) { return new URL("client.html?g=" + c.shareToken, location.href).href; }
+
+/* ---------- Dropping photos anywhere on a client's page ---------- */
+/* dropTarget and uploads belong to the client folder that's open; route() clears them. */
+var dropTarget = null, uploads = null;
+var FOLDER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>';
+var UPLOAD_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg>';
+(function () {
+  var depth = 0, ds = $("dropscreen");
+  function hasFiles(e) { return e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf("Files") > -1; }
+  function live() { return dropTarget && dropTarget.alive(); }
+  function close() { depth = 0; ds.hidden = true; }
+  /* File drops are always caught, so a stray drop never opens the photo in place of the admin. */
+  addEventListener("dragenter", function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    if (live() && depth++ === 0) { dropTarget.open(e.dataTransfer.items ? e.dataTransfer.items.length : 0); ds.hidden = false; }
+  });
+  addEventListener("dragover", function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    if (!live()) { e.dataTransfer.dropEffect = "none"; return; }
+    e.dataTransfer.dropEffect = "copy";
+    dropTarget.over(e.target.closest ? e.target.closest(".target") : null);
+  });
+  addEventListener("dragleave", function (e) { if (hasFiles(e) && --depth <= 0) close(); });
+  addEventListener("drop", function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); close();
+    if (live()) dropTarget.drop(e.dataTransfer);
+  });
+  addEventListener("keydown", function (e) { if (e.key === "Escape" && !ds.hidden) close(); });
+})();
+/* What was dropped, folders included: each file remembers the top folder it came from. */
+function collectDrop(dt) {
+  var entries = Array.from(dt.items || []).map(function (it) { return it.kind === "file" && it.webkitGetAsEntry ? it.webkitGetAsEntry() : null; }).filter(Boolean);
+  if (!entries.length) return Promise.resolve(Array.from(dt.files || []).map(function (f) { return { file: f, dir: "" }; }));
+  var out = [];
+  function walk(en, top) {
+    if (en.isFile) return new Promise(function (res) { en.file(function (f) { out.push({ file: f, dir: top }); res(); }, function () { res(); }); });
+    if (!en.isDirectory) return Promise.resolve();
+    var reader = en.createReader(), kids = [], name = top || en.name;
+    return new Promise(function (res) {
+      (function more() {
+        reader.readEntries(function (b) {
+          if (b.length) { kids = kids.concat(Array.from(b)); more(); }
+          else Promise.all(kids.map(function (k) { return walk(k, name); })).then(res);
+        }, function () { res(); });
+      })();
+    });
+  }
+  return Promise.all(entries.map(function (en) { return walk(en, ""); })).then(function () { return out; });
+}
+/* The camera's name from the photo's own details (EXIF), read in the browser. JPEG only; others return null. */
+var MAKES = { "FUJIFILM": "Fujifilm", "NIKON CORPORATION": "Nikon", "NIKON": "Nikon", "SONY": "Sony", "OLYMPUS CORPORATION": "Olympus", "OLYMPUS IMAGING CORP.": "Olympus", "OM DIGITAL SOLUTIONS": "OM System", "PENTAX": "Pentax", "RICOH IMAGING COMPANY, LTD.": "Ricoh", "LEICA CAMERA AG": "Leica", "PANASONIC": "Panasonic", "CANON": "Canon", "HASSELBLAD": "Hasselblad" };
+function cameraName(make, model) {
+  make = (make || "").replace(/\0+$/, "").trim(); model = (model || "").replace(/\0+$/, "").trim();
+  if (!make && !model) return null;
+  if (/^apple$/i.test(make)) return model || "iPhone";
+  var nice = MAKES[make.toUpperCase()] || make;
+  var first = nice.split(" ")[0].toLowerCase();
+  if (model.toLowerCase().indexOf(first) === 0) return nice + model.slice(first.length);
+  return (nice + " " + model).trim();
+}
+function readCamera(file) {
+  if (!file || !/jpe?g$/i.test((file.type || "").split("/")[1] || "") && !/\.jpe?g$/i.test(file.name || "")) return Promise.resolve(null);
+  return file.slice(0, 262144).arrayBuffer().then(function (buf) {
+    var v = new DataView(buf), off = 2;
+    if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    while (off + 4 < v.byteLength) {
+      var marker = v.getUint16(off), len = v.getUint16(off + 2);
+      if (marker === 0xFFE1 && v.getUint32(off + 4) === 0x45786966) { /* "Exif" */
+        var t = off + 10, le = v.getUint16(t) === 0x4949;
+        var u16 = function (o) { return v.getUint16(t + o, le); }, u32 = function (o) { return v.getUint32(t + o, le); };
+        var ifd = u32(4), n = u16(ifd), make = "", model = "";
+        for (var e = 0; e < n; e++) {
+          var ent = ifd + 2 + e * 12, tag = u16(ent), count = u32(ent + 4);
+          if ((tag === 0x010F || tag === 0x0110) && u16(ent + 2) === 2) {
+            var at = count > 4 ? u32(ent + 8) : ent + 8, s = "";
+            for (var ch = 0; ch < count && t + at + ch < v.byteLength; ch++) { var code = v.getUint8(t + at + ch); if (code) s += String.fromCharCode(code); }
+            if (tag === 0x010F) make = s; else model = s;
+          }
+        }
+        return cameraName(make, model);
+      }
+      if ((marker & 0xFF00) !== 0xFF00 || marker === 0xFFDA) return null; /* no details before the image data */
+      off += 2 + len;
+    }
+    return null;
+  }).catch(function () { return null; });
+}
 
 /* ---------- Sign in ---------- */
 var firstRun = false;
@@ -387,10 +574,19 @@ $("sign-out").addEventListener("click", function () { ss("gsp-admin", null); GS.
 GS.onSignedOut = function () { ss("gsp-admin", null); GS.signOut(); showGate(); };
 
 /* ---------- Routing: #  = folders, #settings, #<client id> ---------- */
-addEventListener("hashchange", function () { if (ss("gsp-admin")) route(); });
+addEventListener("hashchange", function (e) {
+  if (!ss("gsp-admin")) return;
+  /* Leaving a folder mid-upload asks first, since its photos would stop. */
+  if (uploads && uploads.busy()) {
+    if (!confirm("Photos are still uploading. Stop them and leave this folder?")) { history.replaceState(null, "", e.oldURL); return; }
+    uploads.stop();
+  }
+  route();
+});
+addEventListener("beforeunload", function (e) { if (uploads && uploads.busy()) { e.preventDefault(); e.returnValue = ""; } });
 function route() {
   var h = decodeURIComponent(location.hash.slice(1));
-  openFolder = null;
+  openFolder = null; dropTarget = null; uploads = null;
   scrollTo(0, 0);
   if (h === "settings") return renderSettings();
   if (h) return GS.getClient(h).then(function (c) { c ? renderFolder(c) : (location.hash = ""); });
@@ -540,9 +736,24 @@ function renderFolder(c) {
     /* Photos */
     '<section class="card wide"><div class="photohead"><h2>Photos</h2><div class="tabs" role="tablist" id="ptabs"></div></div>' +
       '<p class="sub" id="psub"></p>' +
-      '<label class="drop" id="drop"><input type="file" id="files" multiple accept="image/*">' +
-        '<b>Add photos</b><span class="label">Drop JPEGs here or tap to choose</span></label>' +
-      '<div class="bar-progress" id="up-bar" hidden><i></i></div>' +
+      '<div class="cams">' +
+        '<div class="cams-head"><span class="label">Camera folders</span><div class="cams-acts" id="cam-acts"></div></div>' +
+        '<div class="fstrip" id="cam-strip"></div>' +
+        '<div class="confirm" id="cam-confirm" hidden></div>' +
+        '<div class="switches">' +
+          '<label class="switch mini"><input type="checkbox" id="auto-sort"><i></i><span>Sort new photos by camera</span></label>' +
+          '<label class="switch mini"><input type="checkbox" id="show-cams"><i></i><span>Show folders to your client</span></label>' +
+        '</div>' +
+      '</div>' +
+      '<label class="drop" id="drop"><input type="file" id="files" multiple accept="image/*,.heic,.heif">' + UPLOAD_ICON +
+        '<b><span class="desk">Drag photos here</span><span class="phone">Add photos</span></b>' +
+        '<span class="or"><span class="desk">or <u>choose files</u>. Whole folders work too.</span><span class="phone">Tap to pick from your camera roll or Files.</span></span>' +
+        '<span class="to label" id="drop-to"></span></label>' +
+      '<div class="queue" id="up-queue" hidden>' +
+        '<div class="qrow"><span id="q-text"></span><span class="nums" id="q-size"></span></div>' +
+        '<div class="qbar"><i id="q-bar"></i></div>' +
+        '<div class="qrow"><div class="chips" id="q-chips"></div><button class="btn small quiet" type="button" id="q-stop">Stop uploading</button></div>' +
+      '</div>' +
       '<div class="thumbs" id="thumbs"></div>' +
     '</section>' +
 
@@ -645,66 +856,425 @@ function renderFolder(c) {
   $("share").addEventListener("change", function () { c.shareToken = this.checked ? randomToken() : ""; paintShare(); persist(); });
   paintShare();
 
-  /* Photos */
+  /* Photos: three sections, camera folders inside them, and uploads by drag and drop.
+     Folders live on the client record (c.folders, and c.photoFolders keyed "<section>/<file>"),
+     so moving a photo between folders never touches the photo itself. */
   var PT = [
-    { key: "proofs", title: "Proofs", sub: "Unedited JPEGs your client chooses from for editing." },
-    { key: "finals", title: "Finals", sub: "Your edited images. Downloadable while the timer allows." },
-    { key: "downloads", title: "Downloads", sub: "JPEGs they can save, up to the download limit if you set one." }
+    { key: "proofs", title: "Proofs", sub: "Unedited JPEGs your client chooses from for editing.", drop: "For your client to choose from" },
+    { key: "finals", title: "Finals", sub: "Your edited images. Downloadable while the timer allows.", drop: "Your edited images" },
+    { key: "downloads", title: "Downloads", sub: "JPEGs they can save, up to the download limit if you set one.", drop: "Files they can save" }
   ];
-  var counts = {};
+  c.folders = c.folders || []; c.photoFolders = c.photoFolders || {};
+  if (c.showFolders === undefined) c.showFolders = true;
+  if (c.autoSort === undefined) c.autoSort = true;
+  /* camView: "all", "none" (photos without a folder) or a folder id. editing: a folder id being renamed, or "new". */
+  var photos = [], camView = "all", editing = null, dragging = null, loaded = false;
+  var titleOf = function (k) { return PT.filter(function (t) { return t.key === k; })[0].title; };
+  var keyOf = function (p) { return p.section + "/" + p.name; };
+  var folderById = function (id) { return c.folders.filter(function (f) { return f.id === id; })[0] || null; };
+  var folderByName = function (n) { n = String(n || "").trim().toLowerCase(); return c.folders.filter(function (f) { return f.name.toLowerCase() === n; })[0] || null; };
+  function makeFolder(name) {
+    name = String(name || "").replace(/\s+/g, " ").trim().slice(0, 60) || "New folder";
+    var have = folderByName(name);
+    if (have) return { folder: have, isNew: false };
+    var f = { id: GS.uid(), name: name };
+    c.folders.push(f); persist();
+    return { folder: f, isNew: true };
+  }
+  /* Photos still uploading carry their own folder ("auto" until their camera is read). */
+  function folderOf(p) { return p.pending ? p.folder : c.photoFolders[keyOf(p)] || null; }
+  function shownHere(p) {
+    if (p.section !== folderTab) return false;
+    var f = folderOf(p);
+    if (camView === "all") return true;
+    return camView === "none" ? !f : f === camView;
+  }
+  /* Where a drop lands from the current view: the open folder, sorted by camera, or no folder. */
+  function dropFolder() {
+    if (camView !== "all" && camView !== "none") return camView;
+    return camView === "all" && c.autoSort ? "auto" : null;
+  }
+
   function paintPhotoTabs() {
     $("ptabs").innerHTML = PT.map(function (t) {
-      return '<button class="tab" type="button" role="tab" data-p="' + t.key + '" aria-selected="' + (t.key === folderTab) + '">' + t.title + "<sup>" + (counts[t.key] || 0) + "</sup></button>";
+      var n = photos.filter(function (p) { return p.section === t.key && !p.pending; }).length;
+      return '<button class="tab" type="button" role="tab" data-p="' + t.key + '" aria-selected="' + (t.key === folderTab) + '">' + t.title + "<sup>" + n + "</sup></button>";
     }).join("");
-    $("ptabs").querySelectorAll("[data-p]").forEach(function (b) { b.onclick = function () { folderTab = b.dataset.p; loadPhotos(); }; });
+    $("ptabs").querySelectorAll("[data-p]").forEach(function (b) { b.onclick = function () { folderTab = b.dataset.p; paintPhotos(); }; });
     $("psub").textContent = PT.filter(function (t) { return t.key === folderTab; })[0].sub;
+    var to = dropFolder();
+    $("drop-to").innerHTML = "Adding to <b>" + titleOf(folderTab) + "</b> · " +
+      (to === "auto" ? "sorted into camera folders" : to ? "<b>" + esc(folderById(to).name) + "</b>" : "no folder");
+    $("auto-sort").checked = c.autoSort; $("show-cams").checked = c.showFolders;
+    paintCams();
   }
+  function paintCams() {
+    if (editing && $("cam-name") || dragging) return; /* don't redraw under someone typing a name or dragging a photo */
+    var here = photos.filter(function (p) { return p.section === folderTab; }), html = [];
+    var chip = function (id, label, n) {
+      return '<button class="fchip" type="button" data-v="' + esc(id) + '" aria-pressed="' + (camView === id) + '">' +
+        (id === "all" ? "" : FOLDER_ICON) + "<span>" + esc(label) + '</span><span class="n">' + n + "</span></button>";
+    };
+    html.push(chip("all", "All", here.length));
+    c.folders.forEach(function (f) {
+      if (editing === f.id) html.push('<span class="fchip" aria-pressed="true">' + FOLDER_ICON + '<input id="cam-name" value="' + esc(f.name) + '" maxlength="60" aria-label="Folder name"></span>');
+      else html.push(chip(f.id, f.name, here.filter(function (p) { return folderOf(p) === f.id; }).length));
+    });
+    var loose = here.filter(function (p) { return !folderOf(p); }).length;
+    if (c.folders.length && (loose || camView === "none")) html.push(chip("none", "No folder", loose));
+    if (editing === "new") html.push('<span class="fchip" aria-pressed="true">' + FOLDER_ICON + '<input id="cam-name" maxlength="60" placeholder="e.g. Canon EOS R5" aria-label="New folder name"></span>');
+    else html.push('<button class="fchip add" type="button" id="cam-new">+ New camera folder</button>');
+    var strip = $("cam-strip");
+    strip.innerHTML = html.join("");
+    strip.querySelectorAll("[data-v]").forEach(function (b) {
+      b.onclick = function () { camView = b.dataset.v; $("cam-confirm").hidden = true; paintPhotos(); };
+      if (b.dataset.v === "all") return;
+      /* Drag a photo onto a folder to move it there. */
+      b.addEventListener("dragover", function (e) { if (!dragging) return; e.preventDefault(); b.classList.add("catch"); });
+      b.addEventListener("dragleave", function () { b.classList.remove("catch"); });
+      b.addEventListener("drop", function (e) {
+        if (!dragging) return;
+        e.preventDefault(); b.classList.remove("catch");
+        var p = dragging, to = b.dataset.v === "none" ? null : b.dataset.v;
+        dragging = null;
+        if (folderOf(p) === to) return;
+        if (to) c.photoFolders[keyOf(p)] = to; else delete c.photoFolders[keyOf(p)];
+        persist();
+        toast(p.name + " moved to " + (to ? folderById(to).name : "No folder"));
+        paintPhotos();
+      });
+    });
+    if ($("cam-new")) $("cam-new").onclick = function () { editing = "new"; $("cam-confirm").hidden = true; paintCams(); };
+    var inp = $("cam-name");
+    if (inp) {
+      inp.focus(); inp.select();
+      var done = false;
+      var finish = function (keep) {
+        if (done) return; done = true;
+        var name = inp.value.replace(/\s+/g, " ").trim().slice(0, 60);
+        if (keep && name) {
+          if (editing === "new") { var m = makeFolder(name); camView = m.folder.id; if (m.isNew) toast(m.folder.name + " folder made"); }
+          else {
+            var f = folderById(editing), clash = folderByName(name);
+            if (clash && clash !== f) toast("There's already a folder called " + clash.name);
+            else if (f && f.name !== name) { f.name = name; persist(); }
+          }
+        }
+        editing = null; paintPhotos();
+      };
+      inp.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); finish(true); }
+        if (e.key === "Escape") finish(false);
+      });
+      inp.addEventListener("blur", function () { finish(true); });
+    }
+    var acts = $("cam-acts"), f = folderById(camView);
+    acts.innerHTML = f && !editing ? '<button class="link" type="button" id="cam-rename">Rename</button><button class="link" type="button" id="cam-del">Delete folder</button>' : "";
+    if (!f || editing) return;
+    $("cam-rename").onclick = function () { editing = f.id; paintCams(); };
+    $("cam-del").onclick = function () {
+      var n = Object.keys(c.photoFolders).filter(function (k) { return c.photoFolders[k] === f.id; }).length, box = $("cam-confirm");
+      box.innerHTML = "<span>Delete the <b>" + esc(f.name) + "</b> folder? " +
+        (n ? "Its " + plural(n, "photo") + " stay in this gallery under No folder." : "It's empty.") + "</span>" +
+        '<span class="row"><button class="btn small solid" type="button" id="cam-del-yes">Delete folder</button><button class="btn small quiet" type="button" id="cam-del-no">Cancel</button></span>';
+      box.hidden = false;
+      $("cam-del-no").onclick = function () { box.hidden = true; };
+      $("cam-del-yes").onclick = function () {
+        Object.keys(c.photoFolders).forEach(function (k) { if (c.photoFolders[k] === f.id) delete c.photoFolders[k]; });
+        photos.forEach(function (p) { if (p.pending && p.folder === f.id) p.folder = null; });
+        c.folders = c.folders.filter(function (q) { return q !== f; });
+        box.hidden = true; camView = "all"; persist();
+        toast(n ? "Folder deleted. Its photos are under No folder." : "Folder deleted");
+        paintPhotos();
+      };
+    };
+  }
+  $("auto-sort").addEventListener("change", function () { c.autoSort = this.checked; persist(); paintPhotoTabs(); });
+  $("show-cams").addEventListener("change", function () {
+    c.showFolders = this.checked; persist();
+    toast(this.checked ? "Your client will see the camera folders" : "Camera folders are now just for you");
+  });
+
+  function tileFor(p) {
+    if (p.el) return p.el;
+    var f = document.createElement("figure"); f.className = "thumb";
+    var ph = document.createElement("div"); ph.className = "ph";
+    var u = !p.pending && GS.photoUrl(p);
+    if (u) { var im = new Image(); im.loading = "lazy"; im.src = u; im.alt = p.name; ph.appendChild(im); }
+    else ph.appendChild(GS.placeholder(p.name, 200));
+    var st = document.createElement("div"); st.className = "up-state"; st.innerHTML = "<span></span><i><b></b></i>";
+    ph.appendChild(st);
+    f.appendChild(ph);
+    var cap = document.createElement("figcaption"); cap.innerHTML = "<span></span><small></small>";
+    cap.firstChild.textContent = p.name; f.appendChild(cap);
+    var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.innerHTML = "&times;";
+    x.setAttribute("aria-label", "Remove " + p.name);
+    x.onclick = function (e) {
+      e.stopPropagation();
+      if (p.pending) {
+        if (p.batch === batch) { batch.failed--; paintQueue(); }
+        photos = photos.filter(function (q) { return q !== p; }); f.remove(); paintPhotoTabs(); emptyNote(); return;
+      }
+      GS.deletePhoto(p.id).then(function () {
+        delete c.photoFolders[keyOf(p)]; persist();
+        photos = photos.filter(function (q) { return q !== p; });
+        f.remove(); paintPhotoTabs(); emptyNote(); flashSaved();
+      }, function () { toast("Couldn't remove " + p.name + ". Try again."); });
+    };
+    f.appendChild(x);
+    /* A photo that didn't upload tries again when tapped. */
+    f.addEventListener("click", function () { if (p.state === "failed") retry(p); });
+    f.addEventListener("dragstart", function (e) {
+      if (p.pending) { e.preventDefault(); return; }
+      dragging = p; f.classList.add("lift");
+      e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", p.name);
+    });
+    f.addEventListener("dragend", function () {
+      f.classList.remove("lift"); dragging = null;
+      document.querySelectorAll(".fchip.catch").forEach(function (b) { b.classList.remove("catch"); });
+    });
+    p.el = f;
+    return f;
+  }
+  function paintTile(p) {
+    var f = tileFor(p), st = f.querySelector(".up-state");
+    var picked = (c.selection ? c.selection.frames : []).concat(c.picks || []);
+    var on = !p.pending && p.section === "proofs" && picked.indexOf(p.name) > -1;
+    f.classList.toggle("picked", on);
+    var mark = f.querySelector(".mark-on");
+    if (on && !mark) { var m = document.createElement("span"); m.className = "mark-on label"; m.textContent = "Picked"; f.appendChild(m); }
+    if (!on && mark) mark.remove();
+    ["wait", "up", "failed"].forEach(function (s) { f.classList.toggle(s, p.state === s); });
+    f.draggable = !p.pending;
+    st.hidden = !p.pending;
+    var bar = st.querySelector("b");
+    if (p.state === "failed") { st.firstChild.textContent = "Didn't upload · tap to retry"; bar.style.width = "0"; }
+    else if (p.state === "wait") { st.firstChild.textContent = p.folder === "auto" ? "Reading camera" : "Waiting"; bar.style.width = "0"; }
+    else if (p.state === "up") {
+      var pc = Math.min(99, Math.floor((p.sent || 0) * 100));
+      st.firstChild.textContent = pc + "%"; bar.style.width = pc + "%";
+    }
+    var fo = folderOf(p);
+    f.querySelector("small").textContent = camView === "all" && c.folders.length && fo !== "auto" ? (fo && folderById(fo) ? folderById(fo).name : "No folder") : "";
+  }
+  function paintPhotos() {
+    if (camView === "none" ? !c.folders.length : camView !== "all" && !folderById(camView)) camView = "all";
+    paintPhotoTabs();
+    var box = $("thumbs");
+    box.replaceChildren();
+    photos.filter(shownHere).forEach(function (p) { paintTile(p); box.appendChild(p.el); });
+    emptyNote();
+  }
+  function emptyNote() {
+    var box = $("thumbs"), has = photos.some(shownHere), e = box.querySelector(".empty");
+    if (!has && !e && loaded) {
+      var where = camView === "all" ? "" : camView === "none" ? " without a folder" : " in " + esc(folderById(camView).name);
+      box.innerHTML = '<p class="empty">Nothing here' + where + " yet. " +
+        (camView === "all" ? "This section stays hidden from the client until you add photos." : "Drop photos on the page to add them here.") + "</p>";
+    }
+    if (has && e) e.remove();
+  }
+  var thumbsBox = $("thumbs");
   function loadPhotos() {
     return GS.listPhotos(c.id).then(function (all) {
-      PT.forEach(function (t) { counts[t.key] = all.filter(function (p) { return p.section === t.key; }).length; });
-      paintPhotoTabs();
-      var box = $("thumbs"); box.replaceChildren();
-      var picked = (c.selection ? c.selection.frames : []).concat(c.picks || []);
-      all.filter(function (p) { return p.section === folderTab; }).forEach(function (p) {
-        var f = document.createElement("figure"); f.className = "thumb";
-        var on = folderTab === "proofs" && picked.indexOf(p.name) > -1;
-        if (on) f.classList.add("picked");
-        var ph = document.createElement("div"); ph.className = "ph";
-        var u = GS.photoUrl(p);
-        if (u) { var im = new Image(); im.loading = "lazy"; im.src = u; im.alt = p.name; ph.appendChild(im); }
-        else ph.appendChild(GS.placeholder(p.name, 200));
-        f.appendChild(ph);
-        var cap = document.createElement("figcaption"); cap.textContent = p.name; f.appendChild(cap);
-        if (on) { var m = document.createElement("span"); m.className = "mark-on label"; m.textContent = "Picked"; f.appendChild(m); }
-        var x = document.createElement("button"); x.type = "button"; x.className = "x"; x.innerHTML = "&times;";
-        x.setAttribute("aria-label", "Remove " + p.name);
-        x.onclick = function () { GS.deletePhoto(p.id).then(function () { flashSaved(); loadPhotos(); }); };
-        f.appendChild(x);
-        box.appendChild(f);
-      });
-      if (!box.children.length) box.innerHTML = '<p class="empty" style="grid-column:1/-1;padding:4px 0">Nothing here yet. This section stays hidden from the client until you add photos.</p>';
+      if (!document.contains(thumbsBox)) return; /* this folder was closed meanwhile */
+      var had = {};
+      photos.forEach(function (p) { if (!p.pending) had[p.id] = p; });
+      photos = photos.filter(function (p) { return p.pending; }).concat(all.map(function (p) { return had[p.id] || p; }));
+      loaded = true;
+      paintPhotos();
     });
   }
-  function upload(files) {
-    files = Array.from(files).filter(function (f) { return /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic)$/i.test(f.name); });
-    if (!files.length) return;
-    var bar = $("up-bar"), done = 0;
-    bar.hidden = false; bar.firstChild.style.width = "0";
-    files.reduce(function (p, f) {
-      return p.then(function () {
-        return GS.addPhoto(c.id, folderTab, f).then(function () { bar.firstChild.style.width = (++done / files.length * 100) + "%"; });
-      });
-    }, Promise.resolve()).then(function () {
-      bar.hidden = true; flashSaved(); toast(plural(done, "photo") + " added"); loadPhotos();
+
+  /* ---------- Uploading, three at a time ---------- */
+  var PHOTO = /\.(jpe?g|png|webp|heic|heif|tiff?)$/i;
+  var LANES = 3, queue = [], active = 0, batch = null;
+  function startBatch(section, folder) {
+    if (!batch) batch = { section: section, folder: folder, total: 0, bytes: 0, doneBytes: 0, done: 0, failed: 0, dup: 0, other: 0, made: [] };
+    if (batch.section !== section) batch.section = null; /* a mixed batch just says "this gallery" */
+    if (batch.folder !== folder) batch.folder = "mixed";
+    return batch;
+  }
+  /* folder: an id, null for none, "auto" to sort by camera, or "new" to make folders named after what was dropped. */
+  function addFiles(files, section, folder) {
+    var taken = {}, dup = 0, other = 0, list = [];
+    photos.forEach(function (p) { if (p.section === section && p.state !== "failed") taken[p.name.toLowerCase()] = 1; });
+    files.forEach(function (f) {
+      var n = f.file.name;
+      if (n.charAt(0) === ".") return; /* hidden system files like .DS_Store */
+      if (!(PHOTO.test(n) || /^image\//.test(f.file.type || ""))) { other++; return; }
+      if (taken[n.toLowerCase()]) { dup++; return; }
+      taken[n.toLowerCase()] = 1;
+      list.push(f);
+    });
+    if (!list.length) {
+      var why = [];
+      if (dup) why.push(plural(dup, "photo") + " already in " + titleOf(section));
+      if (other) why.push(plural(other, "file") + " that aren't photos");
+      toast("Nothing new to add" + (why.length ? ": " + why.join(", ") : "") + ".");
+      return;
+    }
+    /* Dropping a photo again replaces its failed try. */
+    var again = {};
+    list.forEach(function (f) { again[f.file.name.toLowerCase()] = 1; });
+    photos = photos.filter(function (p) {
+      var gone = p.state === "failed" && p.section === section && again[p.name.toLowerCase()];
+      if (gone) { if (p.batch === batch) batch.failed--; if (p.el) p.el.remove(); }
+      return !gone;
+    });
+    var b = startBatch(section, folder), target = function () { return folder; }, renameNew = null;
+    b.dup += dup; b.other += other;
+    if (folder === "new") {
+      var ids = {}, dirs = [];
+      list.forEach(function (f) { var d = f.dir || "New folder"; if (!ids[d]) { ids[d] = 1; dirs.push(d); } });
+      dirs.forEach(function (d) { var m = makeFolder(d); ids[d] = m.folder.id; if (m.isNew) b.made.push(m.folder.id); });
+      target = function (f) { return ids[f.dir || "New folder"]; };
+      camView = dirs.length === 1 ? ids[dirs[0]] : "all";
+      if (dirs.length === 1 && dirs[0] === "New folder" && b.made.indexOf(ids[dirs[0]]) > -1) renameNew = ids[dirs[0]];
+    } else if (folder === "auto") camView = "all";
+    else if (folder) camView = folder;
+    else if (camView !== "all") camView = "none";
+    folderTab = section;
+    var added = list.map(function (f) {
+      return { pending: true, state: "wait", name: f.file.name, section: section, file: f.file, size: f.file.size, sent: 0, folder: target(f), batch: b };
+    });
+    b.total += added.length;
+    b.bytes += added.reduce(function (s, p) { return s + p.size; }, 0);
+    photos = added.concat(photos);
+    queue = queue.concat(added);
+    paintPhotos(); paintQueue(); pump();
+    /* A folder made from loose photos is named straight away. */
+    if (renameNew) { editing = renameNew; paintCams(); }
+  }
+  function retry(p) {
+    var b = startBatch(p.section, p.folder);
+    if (p.batch === b) b.failed--; else b.total++;
+    b.bytes += p.size;
+    p.batch = b; p.state = "wait"; p.sent = 0;
+    queue.push(p);
+    paintTile(p); paintQueue(); pump();
+  }
+  function pump() { while (active < LANES && queue.length) send(queue.shift()); }
+  function send(p) {
+    active++;
+    var b = p.batch, ctl = p.ctl = { progress: function (fr) { p.sent = fr; if (b === batch) { paintTile(p); paintQueue(); } } };
+    /* Sorting by camera reads the photo's own details first, then files it. */
+    var camera = p.folder !== "auto" ? Promise.resolve() : readCamera(p.file).then(function (cam) {
+      if (!cam || ctl.stopped) { p.folder = null; return; }
+      var m = makeFolder(cam);
+      if (m.isNew) b.made.push(m.folder.id);
+      p.folder = m.folder.id;
+    });
+    camera.then(function () {
+      if (ctl.stopped) throw new Error("stopped");
+      p.state = "up"; paintTile(p);
+      return GS.addPhoto(c.id, p.section, p.file, ctl);
+    }).then(function (r) {
+      var folder = p.folder;
+      ["pending", "state", "ctl", "file", "folder", "batch", "sent"].forEach(function (k) { delete p[k]; });
+      Object.assign(p, r);
+      if (folder && folderById(folder)) c.photoFolders[keyOf(p)] = folder;
+      persist();
+      if (ctl.stopped) { loadPhotos(); return; } /* it finished just as Stop was pressed, so it's in the gallery after all */
+      b.done++; b.doneBytes += p.size;
+      var ph = p.el.querySelector(".ph"), u = GS.photoUrl(p);
+      if (u) { var im = new Image(); im.src = u; im.alt = p.name; ph.replaceChild(im, ph.firstChild); }
+      p.el.querySelector("figcaption span").textContent = p.name;
+      p.el.classList.add("fresh");
+      setTimeout(function () { if (p.el) p.el.classList.remove("fresh"); }, 2400);
     }).catch(function () {
-      bar.hidden = true; toast("Some photos couldn't be saved. This browser may be out of space."); loadPhotos();
+      if (ctl.stopped) return;
+      p.state = "failed"; p.sent = 0; delete p.ctl;
+      b.failed++; b.bytes -= p.size;
+    }).then(function () {
+      active--;
+      if (b === batch) { paintTile(p); paintPhotoTabs(); paintQueue(); }
+      if (batch && !queue.length && !active) wrapUp(false); else pump();
     });
   }
-  $("files").addEventListener("change", function () { upload(this.files); this.value = ""; });
-  var drop = $("drop");
-  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
-  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
-  drop.addEventListener("drop", function (e) { upload(e.dataTransfer.files); });
+  /* b.made holds folder ids; names are looked up when shown, so a rename mid-upload reads right. */
+  function madeNames(b) { return b.made.map(folderById).filter(Boolean).map(function (f) { return f.name; }); }
+  function wrapUp(stopped) {
+    var b = batch; batch = null;
+    $("up-queue").hidden = true;
+    var t = (stopped ? "Stopped. " : "") + plural(b.done, "photo") + " added" + (b.section ? " to " + titleOf(b.section) : "");
+    var made = madeNames(b);
+    if (made.length) t += " · new folder" + (made.length > 1 ? "s " : " ") + made.join(", ");
+    if (b.failed > 0) t += " · " + b.failed + " didn't upload, tap to retry";
+    var skip = [];
+    if (b.dup) skip.push(b.dup + " already there");
+    if (b.other) skip.push(plural(b.other, "file") + " not a photo");
+    if (skip.length) t += " · skipped " + skip.join(", ");
+    toast(t, 5000);
+    paintPhotoTabs();
+    if (stopped) loadPhotos();
+  }
+  function paintQueue() {
+    var b = batch;
+    if (!b) return;
+    $("up-queue").hidden = false;
+    var flying = photos.reduce(function (s, p) { return s + (p.batch === b && p.state === "up" ? (p.sent || 0) * p.size : 0); }, 0);
+    var into = b.folder === "auto" ? ", sorting by camera" : folderById(b.folder) ? " › " + esc(folderById(b.folder).name) : "";
+    $("q-text").innerHTML = "Uploading" + (b.section ? " to " + titleOf(b.section) : "") + into + " · <b>" + b.done + " of " + b.total + "</b> done";
+    var sent = Math.min(b.bytes, flying + b.doneBytes);
+    $("q-size").textContent = mb(sent) + " of " + mb(b.bytes);
+    $("q-bar").style.width = (b.bytes ? sent / b.bytes * 100 : 0) + "%";
+    var chips = madeNames(b).map(function (n) { return '<span class="chip">New folder: ' + esc(n) + "</span>"; });
+    if (b.dup) chips.push('<span class="chip">' + plural(b.dup, "photo") + " already here, skipped</span>");
+    if (b.other) chips.push('<span class="chip">' + plural(b.other, "file") + " not a photo, skipped</span>");
+    if (b.failed > 0) chips.push('<span class="chip">' + b.failed + " didn't upload</span>");
+    $("q-chips").innerHTML = chips.join("");
+  }
+  function mb(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? Math.round(n / 1e6) + " MB" : Math.ceil(n / 1e3) + " KB"; }
+  function stopAll() {
+    if (!batch) return;
+    queue = [];
+    photos = photos.filter(function (p) {
+      if (!p.pending || p.batch !== batch) return true;
+      if (p.ctl) { p.ctl.stopped = true; if (p.ctl.abort) p.ctl.abort(); }
+      if (p.el) p.el.remove();
+      return false;
+    });
+    wrapUp(true);
+  }
+  $("q-stop").onclick = stopAll;
+  uploads = { busy: function () { return !!batch; }, stop: stopAll };
+
+  /* The full-window drop screen: aim at a section, then a folder. */
+  var aimSec = folderTab, aimFold = null;
+  function aim() {
+    $("dropscreen").querySelectorAll("[data-k]").forEach(function (t) { t.classList.toggle("on", t.dataset.k === aimSec); });
+    $("dropscreen").querySelectorAll("[data-f]").forEach(function (t) { t.classList.toggle("on", t.dataset.f === (aimFold || "none")); });
+  }
+  var self = dropTarget = {
+    alive: function () { return !!$("cam-strip"); },
+    open: function (n) {
+      $("ds-count").textContent = n ? plural(n, "item") : "Photos";
+      $("ds-name").textContent = c.name || "this client";
+      $("ds-sections").innerHTML = PT.map(function (t) {
+        return '<div class="target" data-k="' + t.key + '"><b>' + t.title + "</b><small>" + t.drop + "</small></div>";
+      }).join("");
+      var ft = ['<div class="target ft" data-f="auto"><b>Sort by camera</b><small>Each photo goes to its camera\'s folder</small></div>'];
+      c.folders.forEach(function (f) { ft.push('<div class="target ft" data-f="' + esc(f.id) + '"><b>' + esc(f.name) + "</b></div>"); });
+      ft.push('<div class="target ft" data-f="none"><b>No folder</b></div>');
+      ft.push('<div class="target ft" data-f="new"><b>+ New folder</b><small>Named after the folder you drop</small></div>');
+      $("ds-folders").innerHTML = ft.join("");
+      aimSec = folderTab; aimFold = dropFolder(); aim();
+    },
+    over: function (t) {
+      if (t && t.dataset.k) aimSec = t.dataset.k;
+      if (t && t.dataset.f) aimFold = t.dataset.f === "none" ? null : t.dataset.f;
+      aim();
+    },
+    drop: function (dt) {
+      var s = aimSec, f = aimFold;
+      collectDrop(dt).then(function (files) { if (dropTarget === self) addFiles(files, s, f); });
+    }
+  };
+  $("files").addEventListener("change", function () {
+    addFiles(Array.from(this.files).map(function (f) { return { file: f, dir: "" }; }), folderTab, dropFolder());
+    this.value = "";
+  });
   loadPhotos();
 
   /* Selection */

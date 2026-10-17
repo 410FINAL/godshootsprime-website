@@ -23,7 +23,8 @@ const IMAGE = /\.(jpe?g|png|webp|gif|heic|tiff?)$/i;
 
 /* Fields the photographer edits; everything else on a client record is managed here. */
 const ADMIN_FIELDS = ["name", "password", "shoot", "location", "date", "pick", "downloadLimit", "downloadDays",
-  "timer", "shareToken", "text", "emails", "firstLogin", "downloaded", "selection", "picks"];
+  "timer", "shareToken", "text", "emails", "firstLogin", "downloaded", "selection", "picks",
+  "folders", "photoFolders", "showFolders", "autoSort"];
 
 export default async function handler(req, res) {
   try {
@@ -69,9 +70,10 @@ async function allClients(b) {
 /* What a client or guest is allowed to see about their own folder. */
 function forClient(c, role) {
   const keep = ["id", "name", "shoot", "location", "date", "pick", "downloadLimit", "timer", "downloadDays",
-    "text", "firstLogin", "createdAt"];
+    "text", "firstLogin", "createdAt", "showFolders"];
   const o = {};
   keep.forEach(k => { o[k] = c[k]; });
+  o.folders = c.showFolders === false ? [] : (c.folders || []).map(f => ({ id: f.id, name: f.name }));
   if (role === "client") {
     o.picks = c.picks || []; o.selection = c.selection || null; o.downloaded = c.downloaded || [];
     o.password = c.password; // they signed in with it, or need it as a backup
@@ -109,7 +111,22 @@ function photoKeyOk(folder, key) {
   if (!m) throw new HttpError(400, "Bad photo");
   return { section: m[1], name: m[2] };
 }
-async function listPhotos(b, folder, sections) {
+/* Camera folders: the client record keeps the list of folders and which folder each photo is in,
+   keyed "<section>/<file name>", so photos never have to move inside the bucket. */
+function cleanFolders(list) {
+  return [].concat(list || []).slice(0, 60).map(f => ({
+    id: String(f && f.id || "").replace(/[^a-z0-9-]/gi, "").slice(0, 40),
+    name: String(f && f.name || "").replace(/\s+/g, " ").trim().slice(0, 60)
+  })).filter(f => f.id && f.name);
+}
+function cleanPhotoFolders(map, folders) {
+  const ids = new Set(folders.map(f => f.id)), out = {};
+  Object.entries(map && typeof map === "object" ? map : {}).slice(0, 20000).forEach(([k, v]) => {
+    if (/^(proofs|finals|downloads)\/[^/]{1,200}$/.test(k) && ids.has(v)) out[k] = v;
+  });
+  return out;
+}
+async function listPhotos(b, folder, sections, map) {
   const { keys } = await b.list(`photos/${folder}/`);
   const have = new Set(keys.map(k => k.key));
   const out = [];
@@ -118,7 +135,7 @@ async function listPhotos(b, folder, sections) {
     if (!m || !sections.includes(m[1]) || !IMAGE.test(m[2])) continue;
     const t = `photos/${folder}/${m[1]}/_t/${m[2]}.jpg`, v = `photos/${folder}/${m[1]}/_v/${m[2]}.jpg`;
     out.push({
-      id: k.key, clientId: folder, section: m[1], name: m[2], size: k.size,
+      id: k.key, clientId: folder, section: m[1], name: m[2], size: k.size, folder: (map || {})[m[1] + "/" + m[2]] || null,
       thumbUrl: await b.signGet(have.has(t) ? t : k.key, 6 * 3600),
       viewUrl: await b.signGet(have.has(v) ? v : k.key, 6 * 3600)
     });
@@ -198,7 +215,8 @@ const ACTIONS = {
     const c = {
       id, name: String(body.name || "Untitled"), password: body.password || "", shoot: "", location: "", date: "",
       pick: 0, downloadLimit: 0, downloaded: [], timer: true, shareToken: "", downloadDays: null, text: {},
-      picks: [], selection: null, firstLogin: null, emails: [], createdAt: Date.now()
+      picks: [], selection: null, firstLogin: null, emails: [], createdAt: Date.now(),
+      folders: [], photoFolders: {}, showFolders: true, autoSort: true
     };
     await b.putJSON(clientKey(id), c);
     return c;
@@ -215,6 +233,10 @@ const ACTIONS = {
       }
       ADMIN_FIELDS.forEach(k => { if (k in ch) c[k] = ch[k]; });
       if ("emails" in ch) c.emails = [].concat(ch.emails || []).map(e => String(e).trim().toLowerCase()).filter(Boolean);
+      if ("folders" in ch || "photoFolders" in ch) {
+        c.folders = cleanFolders(c.folders);
+        c.photoFolders = cleanPhotoFolders(c.photoFolders, c.folders);
+      }
     } else if (role === "client") {
       if ("picks" in ch) {
         const picks = [].concat(ch.picks || []).map(String);
@@ -243,7 +265,9 @@ const ACTIONS = {
     const role = access(who, body.clientId);
     let sections = body.section ? [body.section] : SECTIONS;
     if (role === "guest") sections = sections.filter(s => s !== "proofs");
-    return listPhotos(b, body.clientId, sections.filter(s => SECTIONS.includes(s)));
+    const c = await getClient(b, body.clientId);
+    const map = role === "admin" || c.showFolders !== false ? c.photoFolders : null;
+    return listPhotos(b, body.clientId, sections.filter(s => SECTIONS.includes(s)), map);
   },
   /* A short-lived download link, after checking the timer and the download limit. */
   async download({ b, body, who }) {

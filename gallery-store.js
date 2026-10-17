@@ -445,8 +445,13 @@
       x.open("PUT", url);
       x.setRequestHeader("Content-Type", type);
       if (ctl && ctl.progress) x.upload.onprogress = function (e) { if (e.lengthComputable) ctl.progress(e.loaded / e.total); };
-      x.onload = function () { if (x.status >= 200 && x.status < 300) res(); else rej(new Error("Upload failed (" + x.status + ")")); };
-      x.onerror = function () { rej(new Error("Upload failed. Check your connection.")); };
+      x.onload = function () {
+        if (x.status >= 200 && x.status < 300) return res();
+        var code = /<Code>([^<]+)<\/Code>/.exec(x.responseText || "");
+        rej(new Error("Backblaze said " + (code ? code[1] : "no") + " (" + x.status + ")"));
+      };
+      /* No answer at all usually means the bucket hasn't allowed this site yet (Finish setup), or the connection dropped. */
+      x.onerror = function () { rej(new Error("Couldn't reach Backblaze. Run Finish setup in Site text & settings, or check your connection.")); };
       x.onabort = function () { rej(new Error("stopped")); };
       if (ctl) ctl.abort = function () { x.abort(); };
       x.send(blob);

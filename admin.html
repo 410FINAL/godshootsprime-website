@@ -1048,6 +1048,7 @@ function renderFolder(c) {
     f.draggable = !p.pending;
     st.hidden = !p.pending;
     var bar = st.querySelector("b");
+    f.title = p.state === "failed" ? p.error || "" : "";
     if (p.state === "failed") { st.firstChild.textContent = "Didn't upload · tap to retry"; bar.style.width = "0"; }
     else if (p.state === "wait") { st.firstChild.textContent = p.folder === "auto" ? "Reading camera" : "Waiting"; bar.style.width = "0"; }
     else if (p.state === "up") {
@@ -1182,9 +1183,10 @@ function renderFolder(c) {
       p.el.querySelector("figcaption span").textContent = p.name;
       p.el.classList.add("fresh");
       setTimeout(function () { if (p.el) p.el.classList.remove("fresh"); }, 2400);
-    }).catch(function () {
+    }).catch(function (e) {
       if (ctl.stopped) return;
       p.state = "failed"; p.sent = 0; delete p.ctl;
+      p.error = b.error = (e && e.message) || "Upload failed";
       b.failed++; b.bytes -= p.size;
     }).then(function () {
       active--;
@@ -1200,12 +1202,12 @@ function renderFolder(c) {
     var t = (stopped ? "Stopped. " : "") + plural(b.done, "photo") + " added" + (b.section ? " to " + titleOf(b.section) : "");
     var made = madeNames(b);
     if (made.length) t += " · new folder" + (made.length > 1 ? "s " : " ") + made.join(", ");
-    if (b.failed > 0) t += " · " + b.failed + " didn't upload, tap to retry";
+    if (b.failed > 0) t += " · " + b.failed + " didn't upload: " + b.error;
     var skip = [];
     if (b.dup) skip.push(b.dup + " already there");
     if (b.other) skip.push(plural(b.other, "file") + " not a photo");
     if (skip.length) t += " · skipped " + skip.join(", ");
-    toast(t, 5000);
+    toast(t, b.failed > 0 ? 15000 : 5000);
     paintPhotoTabs();
     if (stopped) loadPhotos();
   }
@@ -1222,7 +1224,7 @@ function renderFolder(c) {
     var chips = madeNames(b).map(function (n) { return '<span class="chip">New folder: ' + esc(n) + "</span>"; });
     if (b.dup) chips.push('<span class="chip">' + plural(b.dup, "photo") + " already here, skipped</span>");
     if (b.other) chips.push('<span class="chip">' + plural(b.other, "file") + " not a photo, skipped</span>");
-    if (b.failed > 0) chips.push('<span class="chip">' + b.failed + " didn't upload</span>");
+    if (b.failed > 0) chips.push('<span class="chip">' + b.failed + " didn't upload: " + esc(b.error) + "</span>");
     $("q-chips").innerHTML = chips.join("");
   }
   function mb(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? Math.round(n / 1e6) + " MB" : Math.ceil(n / 1e3) + " KB"; }

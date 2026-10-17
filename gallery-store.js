@@ -398,7 +398,9 @@
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok) {
             var e = new Error(j.error || "Something went wrong. Try again."); e.status = r.status;
-            if (r.status === 401 && GS.onSignedOut) GS.onSignedOut();
+            /* Only an expired session signs the page out. A wrong password at sign-in is a 401 too,
+               and reloading on it made the page look like it crashed. */
+            if (r.status === 401 && tok && !/Login$|^chooseGallery$/.test(action) && GS.onSignedOut) GS.onSignedOut();
             throw e;
           }
           return j;

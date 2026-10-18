@@ -804,8 +804,7 @@ function fillGallery(k) {
     b.setAttribute("aria-label", "View " + (p.caption || "photograph"));
     var fr = document.createElement("div"); fr.className = "frame";
     photo(p, k, i, RATIOS[i % RATIOS.length], fr);
-    var cap = document.createElement("span"); cap.className = "cap label"; cap.textContent = p.caption || "";
-    b.appendChild(fr); b.appendChild(cap);
+    b.appendChild(fr);
     b.addEventListener("click", function () { openLb(k, i); });
     fig.appendChild(b);
     /* Each photo goes in the shortest column, judged by its frame's proportions. */
@@ -902,10 +901,23 @@ var lb = $("lb"), lbCat = null, lbI = 0, lastFocus = null;
 function showLb() {
   var g = GALLERIES[lbCat], p = g.photos[lbI];
   var fr = document.createElement("div"); fr.className = "frame";
-  photo({ src: p.full || p.src, caption: p.caption }, lbCat, lbI, RATIOS[lbI % RATIOS.length], fr, true);
+  /* Show the grid-size copy (already loaded) straight away, then swap in the sharp one when it arrives. */
+  photo({ src: p.src, caption: p.caption }, lbCat, lbI, RATIOS[lbI % RATIOS.length], fr, true);
+  if (p.full && p.full !== p.src) {
+    var sharp = new Image(), shown = lbI;
+    sharp.alt = p.caption || g.title;
+    sharp.onload = function () {
+      if (shown !== lbI) return;
+      var img = fr.querySelector("img");
+      if (img) img.src = sharp.src; else fr.replaceChildren(sharp);
+    };
+    sharp.src = p.full;
+  }
   $("lb-stage").replaceChildren(fr);
   $("lb-title").textContent = g.title + "   " + pad(lbI + 1) + " / " + pad(g.photos.length);
-  $("lb-cap").textContent = (p.caption || "") + (matchMedia("(max-width: 760px)").matches ? "   ·   Swipe" : "");
+  $("lb-cap").textContent = matchMedia("(max-width: 760px)").matches ? "Swipe" : "";
+  /* Fetch the next and previous sharp copies so stepping through is quick. */
+  [1, -1].forEach(function (d) { var q = g.photos[(lbI + d + g.photos.length) % g.photos.length]; if (q && q.full) new Image().src = q.full; });
 }
 function openLb(k, i) { lastFocus = document.activeElement; lbCat = k; lbI = i; lb.hidden = false; document.body.style.overflow = "hidden"; showLb(); $("lb-close").focus(); }
 function closeLb() { lb.hidden = true; document.body.style.overflow = ""; if (lastFocus) lastFocus.focus(); }

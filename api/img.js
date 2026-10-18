@@ -4,7 +4,7 @@
    for a page. This reads one original from Backblaze with the server's key, shrinks it,
    and returns a light JPEG. Vercel's edge keeps each result, so a photo is resized once
    and then served from cache. Usage: /api/img?k=Fashion/DF8A2626.jpg&w=1200&v=<version> */
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { siteBucket, portalBucket, readToken } from "./_lib.js";
 
 const WIDTHS = [480, 1200, 2400];
@@ -44,6 +44,21 @@ export default async function handler(req, res) {
   if (!b || !IMAGE.test(key) || key.includes("..") || key.startsWith("/")) {
     res.statusCode = 404; return res.end();
   }
+  /* Resized copies are also saved in the bucket (_web/...), because Vercel's cache is emptied on
+     every deploy; without this each deploy re-downloaded every ~20 MB original to resize it again. */
+  const saved = priv ? null : `_web/${(url.searchParams.get("v") || "0").replace(/[^a-z0-9]/gi, "")}/${width}/${key}.jpg`;
+  if (saved) {
+    try {
+      const obj = await b.s3.send(new GetObjectCommand({ Bucket: b.name, Key: saved }));
+      const out = Buffer.from(await obj.Body.transformToByteArray());
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "public, max-age=604800, s-maxage=31536000, immutable");
+      return res.end(out);
+    } catch (e) {
+      if (e.name !== "NoSuchKey" && e.$metadata?.httpStatusCode !== 404) console.error("saved copy", saved, e.name, e.message);
+    }
+  }
   let step = "loading the resizer";
   try {
     const sharp = (await import("sharp")).default;
@@ -64,6 +79,11 @@ export default async function handler(req, res) {
       .resize({ width, withoutEnlargement: true })
       .jpeg({ quality: width <= 480 ? 70 : 78, mozjpeg: true, progressive: true })
       .toBuffer();
+    if (saved) {
+      /* Best effort: if the key can't write, the photo still shows, it just isn't saved. */
+      await b.s3.send(new PutObjectCommand({ Bucket: b.name, Key: saved, Body: out, ContentType: "image/jpeg" }))
+        .catch(e => console.error("couldn't save resized copy", saved, e.name, e.message));
+    }
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/jpeg");
     /* The link carries a version from the file's upload time, so a replaced photo gets a new link. */

@@ -112,7 +112,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 02 top plate + dials */
 {
-  const p = part({ n: 2, name: 'Top plate & dials', spec: 'Mode dial, main dial, shutter release', off: [0, 5.4, 0], anchor: [-3, .7, -.4] });
+  const p = part({ n: 2, name: 'Top plate & viewfinder', spec: 'Dials, shutter release, 3.69M-dot OLED EVF', off: [0, 5.4, 0], anchor: [-3, .7, -.4] });
   p.add(rbox(13.2, .5, 4.1, .2), M.body, [0, 4.12, 0]);
   p.add(ycyl(1.05, 1.05, .55, 72), M.satin, [-3.1, 4.64, -.45]);   // mode dial
   p.add(ycyl(.8, .85, .12, 48), M.body, [-3.1, 4.97, -.45]);
@@ -129,7 +129,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 03 EVF */
 {
-  const p = part({ n: 3, name: 'Electronic viewfinder', spec: '3.69M-dot OLED, 0.76×', at: [AX, 4.35, -.15], off: [0, 9.2, -1.2], anchor: [1.8, 1.0, 1.4] });
+  const p = part({ n: 2, bom: false, name: '', spec: '', at: [AX, 4.35, -.15], off: [0, 5.4, 0], anchor: [1.8, 1.0, 1.4] });
   const s = new THREE.Shape(); s.moveTo(-2.75, 0); s.lineTo(2.75, 0); s.lineTo(1.45, 1.5); s.lineTo(-1.45, 1.5); s.closePath();
   p.add(extrudeShape(s, 3.7, .1), M.body, [0, 0, 0]);
   p.add(rbox(2.0, .16, 1.9, .03), M.satin, [0, 1.68, .3]);           // hot shoe
@@ -141,7 +141,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 04 rear LCD (vari-angle, hinge on the left edge) */
 {
-  const p = part({ n: 4, name: 'Vari-angle LCD', spec: '3.0" 1.62M-dot touchscreen', at: [4.95, -.55, -2.82], off: [2.2, 0, -12.6], rot: [0, .95, 0], anchor: [-3.7, 2.4, 0] });
+  const p = part({ n: 3, name: 'Vari-angle LCD', spec: '3.0" 1.62M-dot touchscreen', at: [4.95, -.55, -2.82], off: [2.2, 0, -12.6], rot: [0, .95, 0], anchor: [-3.7, 2.4, 0] });
   p.add(rbox(7.4, 5.2, .48, .3), M.body, [-3.7, 0, 0]);
   p.add(rbox(6.7, 4.5, .04, .08), M.screen, [-3.75, 0, -.25], [0, 0, 0], false);
   p.add(ycyl(.18, .18, 4.4, 24), M.satin, [.05, 0, 0]);
@@ -149,7 +149,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 05 rear control plate */
 {
-  const p = part({ n: 5, name: 'Rear control plate', spec: 'Multi-controller, quick control dial', at: [0, -.05, -2.37], off: [0, 0, -8.6], anchor: [-4.8, -1.1, -.3] });
+  const p = part({ n: 4, name: 'Rear control plate', spec: 'Multi-controller, quick control dial', at: [0, -.05, -2.37], off: [0, 0, -8.6], anchor: [-4.8, -1.1, -.3] });
   p.add(rbox(13.0, 7.6, .36, .3), M.body, [0, 0, 0]);
   p.add(zcyl(1.05, 1.05, .28, 72), M.satin, [-4.8, -1.1, -.3]);   // quick control dial
   p.add(zcyl(.45, .45, .32, 48), M.body, [-4.8, -1.1, -.3]);
@@ -162,7 +162,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 06 shutter */
 {
-  const p = part({ n: 6, name: 'Shutter unit', spec: '1/8000 s mechanical, 1/16000 s electronic', at: [AX, AY, .95], off: [0, 0, -5.2], anchor: [2.7, 2.0, 0] });
+  const p = part({ n: 5, bom: false, name: '', spec: '', at: [AX, AY, .95], off: [0, 0, -6.6], anchor: [2.7, 2.0, 0] });
   const s = rectShape(5.5, 4.4); s.holes.push(rectShape(3.9, 2.7));
   p.add(extrudeShape(s, .42), M.satin);
   for (let i = 0; i < 4; i++) p.add(rbox(3.95, .58, .02, .01), M.body, [0, -1.05 + i * .32, .1 - i * .03]);
@@ -171,7 +171,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 07 sensor + IBIS */
 {
-  const p = part({ n: 7, name: 'Sensor & IBIS', spec: '24.2 MP full-frame CMOS, 5-axis up to 8 stops', at: [AX, AY, .42], off: [0, 0, -8.0], anchor: [1.8, 1.25, .1] });
+  const p = part({ n: 5, name: 'Sensor & shutter', spec: '24.2 MP full-frame CMOS, 5-axis IBIS', at: [AX, AY, .42], off: [0, 0, -6.6], anchor: [1.8, 1.25, .1] });
   p.add(rbox(6.6, 5.6, .32, .3), M.satin, [0, 0, -.38]);           // stabiliser carrier
   for (const [x, y] of [[-2.6, 2.1], [2.6, 2.1], [-2.6, -2.1], [2.6, -2.1]]) p.add(rbox(1.15, .8, .32, .08), M.pcb, [x, y, -.72]); // voice coils
   p.add(rbox(4.6, 3.6, .2, .1), M.pcb, [0, 0, -.12]);              // ceramic package
@@ -181,7 +181,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 08 battery */
 {
-  const p = part({ n: 8, name: 'Battery LP-E6NH', spec: '7.2 V, 2130 mAh', at: [-5.15, -1.0, 2.1], off: [0, -8.6, .4], anchor: [-1.05, -1.6, 0] });
+  const p = part({ n: 6, name: 'Battery LP-E6NH', spec: '7.2 V, 2130 mAh', at: [-5.15, -1.0, 2.1], off: [0, -8.6, .4], anchor: [-1.05, -1.6, 0] });
   p.add(rbox(2.05, 5.5, 3.8, .22), M.body);
   p.add(rbox(2.07, 1.2, 3.82, .05), M.satin, [0, 1.2, 0]);
   p.add(rbox(.03, .2, 2.4, .01), M.white, [-1.04, -1.4, 0], [0, 0, 0], false);
@@ -191,17 +191,17 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 /* 09 cards (two, spread apart) */
 {
   const mk = (bom, z, offX) => {
-    const p = part({ n: 9, bom, name: 'Dual card slots', spec: '2 × SD UHS-II', at: [-5.6, .5, z], off: [offX, 1.6, 0], rot: [0, 0, 0], anchor: [-1.6, 1.2, 0] });
+    const p = part({ n: 7, bom, name: 'Dual card slots', spec: '2 × SD UHS-II', at: [-5.6, .5, z], off: [offX, 1.6, 0], rot: [0, 0, 0], anchor: [-1.6, 1.2, 0] });
     p.add(rbox(3.2, 2.4, .21, .08), M.body);
     p.add(rbox(.6, 2.42, .23, .02), M.satin, [-1.3, 0, 0]);
     p.add(rbox(.02, 1.4, .24, .01), M.white, [-.3, .2, 0], [0, 0, 0], false);
   };
-  mk(true, 2.35, -6.4); mk(false, 2.85, -8.0);
+  mk(true, 2.35, -7.0); mk(false, 2.85, -7.0);
 }
 
 /* 10 RF mount */
 {
-  const p = part({ n: 10, name: 'RF mount', spec: '54 mm throat, 20 mm flange, 12 pins', at: [AX, AY, RFZ], off: [0, 0, 1.5], anchor: [2.7, 1.55, .2] });
+  const p = part({ n: 8, name: 'RF mount', spec: '54 mm throat, 20 mm flange, 12 pins', at: [AX, AY, RFZ], off: [0, 0, 1.5], anchor: [2.7, 1.55, .2] });
   p.add(lathe([[2.72, 0], [3.12, 0], [3.12, .2], [2.96, .22], [2.96, .35], [2.72, .35]]), M.chrome);
   for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + i * Math.PI / 2; p.add(zcyl(.08, .08, .04, 16), M.body, [Math.cos(a) * 2.98, Math.sin(a) * 2.98, .37], [0, 0, 0], false); }
   for (let i = 0; i < 3; i++) { const a = Math.PI / 2 + .6 + i * TAU / 3; p.add(rbox(1.1, .26, .1, .03), M.chrome, [Math.cos(a) * 2.6, Math.sin(a) * 2.6, .3], [0, 0, a - Math.PI / 2]); }
@@ -210,7 +210,7 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 
 /* 11 adapter */
 {
-  const p = part({ n: 11, name: 'Mount adapter EF-EOS R', spec: '24 mm spacer, EF to RF', at: [AX, AY, ADZ], off: [0, 0, 3.0], anchor: [2.45, 2.45, 1.2] });
+  const p = part({ n: 9, name: 'Mount adapter EF-EOS R', spec: '24 mm spacer, EF to RF', at: [AX, AY, ADZ], off: [0, 0, 3.0], anchor: [2.45, 2.45, 1.2] });
   p.add(lathe([[2.7, 0], [3.02, 0], [3.02, .16], [3.45, .26], [3.45, 2.1], [3.3, 2.22], [3.3, 2.4], [2.7, 2.4]]), M.body);
   p.add(ring(2.72, 3.28, 2.25, 2.4), M.chrome);
   p.add(ycyl(.1, .1, .04, 24), M.white, [0, 3.46, 1.85], [0, 0, 0], false); // index dot
@@ -222,28 +222,28 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
 {
   const at = [AX, AY, LZ];
   // 12 EF mount
-  const m = part({ n: 12, name: 'EF lens mount', spec: '44 mm flange, 8 contacts', at, off: [0, 0, LENS_OFF], anchor: [2.0, -2.0, .15] });
+  const m = part({ n: 10, bom: false, name: '', spec: '', at, off: [0, 7.2, LENS_OFF + 2.2], anchor: [2.0, -2.0, .15] });
   m.add(ring(2.42, 2.92, 0, .28), M.chrome);
   m.add(ring(1.95, 2.42, .05, .3), M.rubber);
   for (let i = 0; i < 3; i++) { const a = -.3 + i * TAU / 3; m.add(rbox(1.2, .28, .12, .03), M.chrome, [Math.cos(a) * 2.95, Math.sin(a) * 2.95, .14], [0, 0, a - Math.PI / 2]); }
 
   // 13 barrel (rear section, focus ring, front section) - shells lift off the optics
-  const b = part({ n: 13, name: 'Barrel & focus ring', spec: 'Ring-type USM, full-time manual focus', at, off: [0, 7.0, LENS_OFF + 1.2], anchor: [0, 4.2, 1.4] });
+  const b = part({ n: 10, name: 'Lens barrel', spec: 'EF mount, ring-type USM, focus ring', at, off: [0, 7.2, LENS_OFF + 2.2], anchor: [0, 4.2, 1.4] });
   b.add(lathe([[3.25, .28], [3.7, .28], [3.72, .55], [4.15, .9], [4.15, 2.4], [3.95, 2.4], [3.95, .55], [3.25, .55]]), M.body);
   b.add(rbox(1.7, .45, .14, .06), M.screen, [0, 4.1, 1.55], [-Math.PI / 2, 0, 0], false);   // distance window
   b.add(rbox(.18, .95, .5, .06), M.satin, [-4.2, .2, 1.6]);                                  // AF/MF switch
-  const f = part({ n: 13, bom: false, name: 'Barrel & focus ring', spec: '', at, off: [0, 8.4, LENS_OFF + 3.0], anchor: [0, 4.3, 3.7] });
+  const f = part({ n: 10, bom: false, name: '', spec: '', at, off: [0, 7.2, LENS_OFF + 2.2], anchor: [0, 4.3, 3.7] });
   const fr = [[4.0, 2.45]];
   for (let z = 2.45, k = 0; z < 4.95; z += .125, k++) fr.push([k % 2 ? 4.18 : 4.28, z], [k % 2 ? 4.18 : 4.28, z + .125]);
   fr.push([4.0, 4.95]);
   f.add(lathe(fr, 128), M.rubber);
-  const fb = part({ n: 13, bom: false, name: 'Barrel & focus ring', spec: '', at, off: [0, 7.0, LENS_OFF + 5.0], anchor: [0, 4.2, 5.8] });
+  const fb = part({ n: 10, bom: false, name: '', spec: '', at, off: [0, 7.2, LENS_OFF + 2.2], anchor: [0, 4.2, 5.8] });
   fb.add(lathe([[3.6, 5.0], [4.2, 5.0], [4.2, 6.3], [4.05, 6.55], [3.6, 6.55]]), M.body);
   fb.add(ring(4.2, 4.215, 5.35, 5.42), M.white);                                              // lens ring
   fb.add(ring(3.3, 3.6, 6.3, 6.5), M.body);                                                   // filter thread
 
   // 14 aperture
-  const ap = part({ n: 14, name: 'Aperture', spec: '8 blades, f/1.2 to f/16', at, off: [0, 0, LENS_OFF + 4.8], anchor: [1.9, 1.9, 2.7] });
+  const ap = part({ n: 11, bom: false, name: '', spec: '', at, off: [0, 0, LENS_OFF + 4.8], anchor: [1.9, 1.9, 2.7] });
   {
     const R = 2.75, r = 1.6, s = new THREE.Shape(); s.absarc(0, 0, R, 0, TAU, false);
     const h = new THREE.Path(), v = [];
@@ -270,14 +270,14 @@ const LENS_OFF = 4.4;        // how far the whole lens travels forward
     [[3.2, 2.6, .26, .05, -.22], [3.55, 2.6, .44, .26, -.05]],    // G3 cemented
     [[4.6, 3.0, .26, .38, -.3]],                                  // G2 meniscus
   ];
-  const opt = part({ n: 15, name: 'Optical groups', spec: '8 elements in 6 groups, 1 aspherical', at, off: [0, 0, LENS_OFF], anchor: [2.2, -1.6, 3.4] });
+  const opt = part({ n: 11, name: 'Optics', spec: '8 elements in 6 groups, 8-blade aperture', at, off: [0, 0, LENS_OFF], anchor: [2.2, 2.2, 10.6] });
   opt.subs = [];
   groups.forEach(gr => gr.forEach(([z, R, t, s1, s2]) => {
     const mesh = opt.add(lens(R, t, s1, s2), M.glass, [0, 0, z]);
     mesh.renderOrder = 2;
     opt.subs.push({ mesh, z, dz: z * (S - 1) });
   }));
-  const fe = part({ n: 16, name: 'Front element', spec: 'Ø72 mm filter, 85.4 mm barrel', at, off: [0, 0, LENS_OFF + 5.75 * (S - 1) + 1.4], anchor: [2.4, 2.4, 5.8] });
+  const fe = part({ n: 11, bom: false, name: '', spec: '', at, off: [0, 0, LENS_OFF + 5.75 * (S - 1) + 1.4], anchor: [2.4, 2.4, 5.8] });
   fe.add(lens(3.35, .5, .6, .06), M.glass, [0, 0, 5.75]).renderOrder = 2;
 }
 
@@ -296,7 +296,6 @@ BOM.forEach(p => {
   p.line = document.createElementNS(SVGNS, 'line'); p.dot = document.createElementNS(SVGNS, 'circle'); p.dot.setAttribute('r', 1.6);
   svg.append(p.line, p.dot);
 });
-const countEl = document.getElementById('introCount');
 const nowEl = document.getElementById('introNow');
 const bar = document.getElementById('introBar');
 
@@ -317,17 +316,15 @@ addEventListener('wheel', e => {
   const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
   nudge(px / (innerHeight * 4));
 }, { passive: false });
-let touchY = null, moved = 0;
-intro.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; moved = 0; }, { passive: true });
+let touchY = null;
+intro.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
 intro.addEventListener('touchmove', e => {
   if (touchY === null) return;
   e.preventDefault();
-  const y = e.touches[0].clientY; moved += Math.abs(touchY - y);
+  const y = e.touches[0].clientY;
   nudge((touchY - y) / (innerHeight * 2.2)); touchY = y;
 }, { passive: false });
 intro.addEventListener('touchend', () => { touchY = null; });
-// a swipe is not a tap: keep index.html's tap-to-skip from firing after a drag
-intro.addEventListener('click', e => { if (moved > 10) { e.stopImmediatePropagation(); moved = 0; } }, true);
 addEventListener('keydown', e => {
   if (!document.body.contains(stage)) return;
   const k = e.key;
@@ -389,14 +386,13 @@ function stop() {
   scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
 }
 function tick(now) {
-  if (!document.body.contains(stage)) { stop(); return; }   // skipped: the intro was removed
+  if (!document.body.contains(stage)) { stop(); return; }   // the intro was removed
   const dt = (now - lastT) / 1000; lastT = now;
   prog = lerp(prog, target, 1 - Math.pow(.0005, Math.min(dt, .1)));   // smooth the scroll, by time not frames
   if (target >= 1 && prog > .985 && !finished) { finished = true; if (window.gspIntroDone) window.gspIntroDone(); }
   const e = explodeAt(prog);
   const idle = Math.sin((now - t0) / 4000) * .05 * (1 - e * .6);
 
-  let revealed = 0, latest = null;
   parts.forEach(p => {
     const t = ease(clamp((e - p.t0) / (p.t1 - p.t0)));
     p.local = t;
@@ -404,7 +400,6 @@ function tick(now) {
     p.g.rotation.set(p.rot[0] * t, p.rot[1] * t, p.rot[2] * t);
     if (p.subs) p.subs.forEach(s => s.mesh.position.z = s.z + s.dz * t);
     p.lineMat.opacity = lerp(.1, .3, e);
-    if (p.bom && t > .55) { revealed++; latest = p; }
   });
 
   frame(e, idle);
@@ -435,8 +430,7 @@ function tick(now) {
     p.line.style.opacity = p.dot.style.opacity = show ? 1 : 0;
     p.dot.setAttribute('cx', ax); p.dot.setAttribute('cy', ay);
   });
-  countEl.textContent = `${pad(revealed)} / ${N}`;
-  nowEl.textContent = prog > APART + .02 ? 'Keep scrolling to enter' : latest && e > .02 ? latest.name : 'Scroll to take it apart';
+  nowEl.style.opacity = prog < .03 ? 1 : 0;
   bar.style.width = (prog * 100) + '%';
   stage.style.opacity = prog > .9 ? String(1 - (prog - .9) / .1 * .6) : '';
 

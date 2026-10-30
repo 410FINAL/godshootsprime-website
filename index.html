@@ -317,7 +317,7 @@ input[type="date"].text { color-scheme: dark; }
 }
 .intro.out { opacity: 0; pointer-events: none; }
 /* The camera (R6 Mark II + EF 50 f/1.2L) comes apart and snaps back together, drawn by intro-camera.js; then the site slowly fades in. */
-.intro { cursor: pointer; overflow: hidden; padding: 0; }
+.intro { overflow: hidden; padding: 0; }
 .intro-cam { position: absolute; inset: 0; opacity: 0; transition: opacity .9s var(--ease); }
 .intro-cam.ready { opacity: 1; }
 .intro-cam canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -332,12 +332,11 @@ input[type="date"].text { color-scheme: dark; }
   background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px;
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); }
 .intro-brand { position: absolute; top: 28px; left: var(--gutter); font: 500 11px/1 var(--sans); letter-spacing: .34em; text-transform: uppercase; }
-.intro-skip { position: absolute; top: 20px; right: var(--gutter); font: 500 10px/1 var(--sans); letter-spacing: .22em; text-transform: uppercase; color: var(--grey); background: none; border: 0; padding: 8px 0; cursor: pointer; }
-.intro-skip:hover { color: var(--ink); }
 .intro-load { position: absolute; left: 50%; bottom: max(40px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(320px, 70vw); pointer-events: none; }
 .intro-load .track { height: 1px; background: #2a2a2a; margin-bottom: 12px; overflow: hidden; }
+.intro-load .meta span { transition: opacity .5s; }
 .intro-load .track i { display: block; height: 100%; width: 0; background: var(--ink); }
-.intro-load .meta { display: flex; justify-content: space-between; gap: 12px; font: 500 10px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--grey); font-variant-numeric: tabular-nums; }
+.intro-load .meta { display: flex; justify-content: center; font: 500 10px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--grey); font-variant-numeric: tabular-nums; }
 @media (max-width: 860px) { .intro-cam .tag span { display: none; } .intro-load { bottom: 64px; } }
 body.opening { overflow: hidden; }
 body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
@@ -465,8 +464,7 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
   <div class="intro-grid"></div>
   <div class="intro-cam" id="introCam"><svg id="introLeaders"></svg><div id="introTags"></div></div>
   <span class="intro-brand">Godshootsprime</span>
-  <button class="intro-skip" type="button">Skip</button>
-  <div class="intro-load"><div class="track"><i id="introBar"></i></div><div class="meta"><span id="introNow">Loading</span><span id="introCount">00 / 16</span></div></div>
+  <div class="intro-load"><div class="track"><i id="introBar"></i></div><div class="meta"><span id="introNow">Scroll</span></div></div>
 </div>
 
 <header class="bar" id="bar">
@@ -1235,7 +1233,6 @@ function finishIntro(instant) {
   var giveUp = setTimeout(function () { if (!started) finishIntro(false); }, 6000);
   import("./intro-camera.js").then(function () { started = true; clearTimeout(giveUp); })
     .catch(function () { finishIntro(false); });
-  intro.addEventListener("click", function () { finishIntro(false); });
   addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter")) finishIntro(false); });
 })();
 

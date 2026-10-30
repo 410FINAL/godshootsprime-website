@@ -1,4 +1,5 @@
-/* Opening animation: the R6 Mark II + EF 50 f/1.2L come apart and snap back together, then the site fades in.
+/* Opening animation: the R6 Mark II + EF 50 f/1.2L come apart as the visitor scrolls (or swipes); scrolling back puts it
+   together, scrolling on past fully apart fades into the site. Nothing moves on its own.
    Loaded by index.html (runIntro) only when the opening plays. Calls window.gspIntroDone() when finished. */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -304,16 +305,35 @@ const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const ease = t => t < .5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 const lerp = (a, b, t) => a + (b - a) * t;
 parts.forEach(p => { const k = BOM.findIndex(q => q.n === p.n); p.t0 = k / N * .62; p.t1 = p.t0 + .38; });
-// seconds: settle in, come apart, hold, snap back together
-const T = { in: .9, apart: 3.4, hold: 1.1, back: 1.3 };
-const LENGTH = T.in + T.apart + T.hold + T.back;
-const BACK_AT = T.in + T.apart + T.hold;
-function explodeAt(t) {
-  if (t < T.in) return 0;
-  if (t < T.in + T.apart) return (t - T.in) / T.apart;
-  if (t < BACK_AT) return 1;
-  return 1 - ease(clamp((t - BACK_AT) / T.back));
-}
+// scroll position: 0 assembled, APART fully exploded, 1 = enter the site
+const APART = .8;
+const explodeAt = p => clamp(p / APART);
+let target = 0, prog = 0, finished = false;
+function nudge(d) { if (!finished) target = clamp(target + d); }
+const intro = document.getElementById('intro');
+addEventListener('wheel', e => {
+  if (!document.body.contains(stage)) return;
+  e.preventDefault();
+  const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+  nudge(px / (innerHeight * 4));
+}, { passive: false });
+let touchY = null, moved = 0;
+intro.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; moved = 0; }, { passive: true });
+intro.addEventListener('touchmove', e => {
+  if (touchY === null) return;
+  e.preventDefault();
+  const y = e.touches[0].clientY; moved += Math.abs(touchY - y);
+  nudge((touchY - y) / (innerHeight * 2.2)); touchY = y;
+}, { passive: false });
+intro.addEventListener('touchend', () => { touchY = null; });
+// a swipe is not a tap: keep index.html's tap-to-skip from firing after a drag
+intro.addEventListener('click', e => { if (moved > 10) { e.stopImmediatePropagation(); moved = 0; } }, true);
+addEventListener('keydown', e => {
+  if (!document.body.contains(stage)) return;
+  const k = e.key;
+  if (k === 'ArrowDown' || k === 'PageDown' || k === ' ') { e.preventDefault(); nudge(.08); }
+  else if (k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); nudge(-.08); }
+});
 
 /* ---------- framing ---------- */
 const box = new THREE.Box3(), tmpBox = new THREE.Box3();
@@ -363,17 +383,17 @@ function toScreen(v) { tv2.copy(v).project(cam); return [(tv2.x + 1) / 2 * W, (1
 /* ---------- loop ---------- */
 stage.classList.add('ready');
 const t0 = performance.now();
-let time = 0, finished = false;
+let lastT = t0;
 function stop() {
   renderer.dispose(); pmrem.dispose();
   scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
 }
 function tick(now) {
   if (!document.body.contains(stage)) { stop(); return; }   // skipped: the intro was removed
-  time = (now - t0) / 1000;   // wall clock, so a slow phone drops frames instead of dragging the intro out
-  if (time >= LENGTH && !finished) { finished = true; if (window.gspIntroDone) window.gspIntroDone(); }
-  const e = explodeAt(time);
-  const prog = clamp(time / LENGTH);
+  const dt = (now - lastT) / 1000; lastT = now;
+  prog = lerp(prog, target, 1 - Math.pow(.0005, Math.min(dt, .1)));   // smooth the scroll, by time not frames
+  if (target >= 1 && prog > .985 && !finished) { finished = true; if (window.gspIntroDone) window.gspIntroDone(); }
+  const e = explodeAt(prog);
   const idle = Math.sin((now - t0) / 4000) * .05 * (1 - e * .6);
 
   let revealed = 0, latest = null;
@@ -395,7 +415,7 @@ function tick(now) {
   const wide = W > 860, reach = wide ? 46 : 30, gap = wide ? 22 : 28;
   const sides = [[], []];
   BOM.forEach(p => {
-    p.show = p.local > .75 && e > .05 && time < BACK_AT;
+    p.show = p.local > .75 && e > .05 && prog < .93;
     [p.ax, p.ay] = toScreen(tv.copy(p.anchorV).applyMatrix4(p.g.matrixWorld));
     let dx = p.ax - center[0], dy = p.ay - center[1]; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
     p.left = dx < 0; p.tx = p.ax + dx * reach; p.ty = p.ay + dy * reach;
@@ -416,8 +436,9 @@ function tick(now) {
     p.dot.setAttribute('cx', ax); p.dot.setAttribute('cy', ay);
   });
   countEl.textContent = `${pad(revealed)} / ${N}`;
-  nowEl.textContent = time > BACK_AT ? 'Reassembling' : latest && e > .02 ? latest.name : 'Loading';
+  nowEl.textContent = prog > APART + .02 ? 'Keep scrolling to enter' : latest && e > .02 ? latest.name : 'Scroll to take it apart';
   bar.style.width = (prog * 100) + '%';
+  stage.style.opacity = prog > .9 ? String(1 - (prog - .9) / .1 * .6) : '';
 
   requestAnimationFrame(tick);
 }

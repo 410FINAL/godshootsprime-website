@@ -1236,7 +1236,7 @@ function finishIntro(instant) {
   import("./intro-camera.js").then(function () { started = true; clearTimeout(giveUp); })
     .catch(function () { finishIntro(false); });
   intro.addEventListener("click", function () { finishIntro(false); });
-  addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) finishIntro(false); });
+  addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter")) finishIntro(false); });
 })();
 
 /* ---------- Phone tab bar ---------- */

@@ -8,6 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&display=swap">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
 <style>
 /* Layout: black gallery walls. One hero frame, a tabbed portfolio, a three-step process, and a full-screen inquiry that asks one thing at a time. */
 :root {
@@ -310,9 +316,29 @@ input[type="date"].text { color-scheme: dark; }
   transition: opacity 1.8s ease;
 }
 .intro.out { opacity: 0; pointer-events: none; }
-/* GOD, SHOOTS, PRIME come up one line at a time, then the site slowly fades in. */
-.intro .words { margin: 0; text-align: center; font: 400 clamp(52px, 11vw, 132px)/1.02 var(--display); letter-spacing: .04em; text-transform: uppercase; }
-.intro .words span { display: block; opacity: 0; animation: rise 1.1s var(--ease) var(--t, 0s) forwards; }
+/* The camera (R6 Mark II + EF 50 f/1.2L) comes apart and snaps back together, drawn by intro-camera.js; then the site slowly fades in. */
+.intro { cursor: pointer; overflow: hidden; padding: 0; }
+.intro-cam { position: absolute; inset: 0; opacity: 0; transition: opacity .9s var(--ease); }
+.intro-cam.ready { opacity: 1; }
+.intro-cam canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.intro-cam svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.intro-cam svg line { stroke: rgba(244,244,244,.38); stroke-width: 1; }
+.intro-cam svg circle { fill: var(--ink); }
+.intro-cam .tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; font: 500 10px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); white-space: nowrap; opacity: 0; transition: opacity .35s; }
+.intro-cam .tag b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(244,244,244,.6); background: rgba(0,0,0,.75); font-weight: 500; font-size: 10px; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.intro-cam .tag span { color: var(--grey); }
+.intro-cam .tag.left { flex-direction: row-reverse; }
+.intro-grid { position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); }
+.intro-brand { position: absolute; top: 28px; left: var(--gutter); font: 500 11px/1 var(--sans); letter-spacing: .34em; text-transform: uppercase; }
+.intro-skip { position: absolute; top: 20px; right: var(--gutter); font: 500 10px/1 var(--sans); letter-spacing: .22em; text-transform: uppercase; color: var(--grey); background: none; border: 0; padding: 8px 0; cursor: pointer; }
+.intro-skip:hover { color: var(--ink); }
+.intro-load { position: absolute; left: 50%; bottom: max(40px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(320px, 70vw); pointer-events: none; }
+.intro-load .track { height: 1px; background: #2a2a2a; margin-bottom: 12px; overflow: hidden; }
+.intro-load .track i { display: block; height: 100%; width: 0; background: var(--ink); }
+.intro-load .meta { display: flex; justify-content: space-between; gap: 12px; font: 500 10px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--grey); font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) { .intro-cam .tag span { display: none; } .intro-load { bottom: 64px; } }
 body.opening { overflow: hidden; }
 body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
 body.revealed .hero-frame { animation-delay: .15s; }
@@ -429,7 +455,6 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .intro .words span { opacity: 1; transform: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 </style>
@@ -437,11 +462,11 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 <body>
 
 <div class="intro" id="intro" role="presentation">
-  <p class="words" aria-label="God Shoots Prime">
-    <span style="--t:.3s">God</span>
-    <span style="--t:1.1s">Shoots</span>
-    <span style="--t:1.9s">Prime</span>
-  </p>
+  <div class="intro-grid"></div>
+  <div class="intro-cam" id="introCam"><svg id="introLeaders"></svg><div id="introTags"></div></div>
+  <span class="intro-brand">Godshootsprime</span>
+  <button class="intro-skip" type="button">Skip</button>
+  <div class="intro-load"><div class="track"><i id="introBar"></i></div><div class="meta"><span id="introNow">Loading</span><span id="introCount">00 / 16</span></div></div>
 </div>
 
 <header class="bar" id="bar">
@@ -1186,7 +1211,7 @@ document.addEventListener("keydown", function (e) {
   } else if (!flow.hidden && e.key === "Escape") closeFlow();
 });
 
-/* ---------- Opening: GOD / SHOOTS / PRIME ---------- */
+/* ---------- Opening: the camera comes apart and back together (intro-camera.js) ---------- */
 var intro = $("intro"), introDone = false;
 function finishIntro(instant) {
   if (introDone) return;
@@ -1203,9 +1228,13 @@ function finishIntro(instant) {
   try { seen = !!sessionStorage.getItem("gsp-intro"); } catch (e) {}
   if (seen || location.hash === "#inquire") { finishIntro(true); return; }
   document.body.classList.add("opening");
-  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  /* PRIME is in by about 3s; hold the three words a beat, then fade to the site. */
-  setTimeout(function () { finishIntro(false); }, reduce ? 1600 : 3800);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setTimeout(function () { finishIntro(false); }, 1200); return; }
+  window.gspIntroDone = function () { finishIntro(false); };
+  /* If the 3D model can't load (old browser, no WebGL, slow network), don't hold people on a black screen. */
+  var started = false;
+  var giveUp = setTimeout(function () { if (!started) finishIntro(false); }, 6000);
+  import("./intro-camera.js").then(function () { started = true; clearTimeout(giveUp); })
+    .catch(function () { finishIntro(false); });
   intro.addEventListener("click", function () { finishIntro(false); });
   addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) finishIntro(false); });
 })();

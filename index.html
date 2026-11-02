@@ -324,10 +324,7 @@ input[type="date"].text { color-scheme: dark; }
 .intro-cam svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .intro-cam svg line { stroke: rgba(244,244,244,.38); stroke-width: 1; }
 .intro-cam svg circle { fill: var(--ink); }
-.intro-cam .tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px; font: 500 10px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); white-space: nowrap; opacity: 0; transition: opacity .35s; }
-.intro-cam .tag b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(244,244,244,.6); background: rgba(0,0,0,.75); font-weight: 500; font-size: 10px; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
-.intro-cam .tag span { color: var(--grey); }
-.intro-cam .tag.left { flex-direction: row-reverse; }
+.intro-cam .tag { position: absolute; left: 0; top: 0; font: 500 10px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--grey); white-space: nowrap; opacity: 0; transition: opacity .35s; }
 .intro-grid { position: absolute; inset: 0; pointer-events: none; opacity: .5;
   background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px;
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); }
@@ -337,7 +334,7 @@ input[type="date"].text { color-scheme: dark; }
 .intro-load .meta span { transition: opacity .5s; }
 .intro-load .track i { display: block; height: 100%; width: 0; background: var(--ink); }
 .intro-load .meta { display: flex; justify-content: center; font: 500 10px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--grey); font-variant-numeric: tabular-nums; }
-@media (max-width: 860px) { .intro-cam .tag span { display: none; } .intro-load { bottom: 64px; } }
+@media (max-width: 860px) { .intro-cam .tag { font-size: 8.5px; letter-spacing: .1em; } .intro-load { bottom: 64px; } }
 body.opening { overflow: hidden; }
 body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
 body.revealed .hero-frame { animation-delay: .15s; }

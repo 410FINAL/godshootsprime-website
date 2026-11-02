@@ -285,13 +285,15 @@ const BOM = parts.filter(p => p.bom).sort((a, b) => a.n - b.n);
 const N = BOM.length;
 
 /* ---------- overlays ---------- */
-const pad = n => String(n).padStart(2, '0');
 const tagsEl = document.getElementById('introTags');
+const SHORT = { 'Top plate & viewfinder': 'Top plate', 'Vari-angle LCD': 'Screen', 'Rear control plate': 'Rear plate', 'Sensor & shutter': 'Sensor',
+  'Battery LP-E6NH': 'Battery', 'Dual card slots': 'SD cards', 'Mount adapter EF-EOS R': 'Adapter', 'Lens barrel': 'Barrel' }; // phone labels
 const svg = document.getElementById('introLeaders');
 const SVGNS = 'http://www.w3.org/2000/svg';
 BOM.forEach(p => {
   const t = document.createElement('div'); t.className = 'tag';
-  t.innerHTML = `<b>${pad(p.n)}</b><span>${p.name}</span>`;
+  p.short = SHORT[p.name] || p.name;
+  t.textContent = p.name;   // names only, no part numbers (dave, 2026-11-02)
   tagsEl.appendChild(t); p.tag = t;
   p.line = document.createElementNS(SVGNS, 'line'); p.dot = document.createElementNS(SVGNS, 'circle'); p.dot.setAttribute('r', 1.6);
   svg.append(p.line, p.dot);
@@ -421,12 +423,15 @@ function tick(now) {
     for (let i = 1; i < side.length; i++) if (side[i].ty - side[i - 1].ty < gap) side[i].ty = side[i - 1].ty + gap;
   });
   BOM.forEach(p => {
-    const { ax, ay, tx, ty, left, show } = p;
-    p.tag.classList.toggle('left', left);
-    p.tag.style.transform = `translate(${tx}px, ${ty}px) translate(${left ? 'calc(-100% + 12px)' : '-12px'}, -50%)`;
+    const { ax, ay, ty, left, show } = p; let { tx } = p;
+    const label = wide ? p.name : p.short;
+    if (p.tag.textContent !== label) { p.tag.textContent = label; p.tw = 0; }
+    if (show && !p.tw) p.tw = p.tag.offsetWidth;
+    if (p.tw) tx = left ? Math.max(tx, p.tw + 14) : Math.min(tx, W - 14 - p.tw);   // keep labels on screen
+    p.tag.style.transform = `translate(${tx}px, ${ty}px) translate(${left ? 'calc(-100% - 6px)' : '6px'}, -50%)`;
     p.tag.style.opacity = show ? 1 : 0;
     p.line.setAttribute('x1', ax); p.line.setAttribute('y1', ay);
-    p.line.setAttribute('x2', tx + (left ? 12 : -12)); p.line.setAttribute('y2', ty);
+    p.line.setAttribute('x2', tx); p.line.setAttribute('y2', ty);
     p.line.style.opacity = p.dot.style.opacity = show ? 1 : 0;
     p.dot.setAttribute('cx', ax); p.dot.setAttribute('cy', ay);
   });

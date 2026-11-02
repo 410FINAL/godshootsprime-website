@@ -314,7 +314,7 @@ addEventListener('wheel', e => {
   if (!document.body.contains(stage)) return;
   e.preventDefault();
   const px = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
-  nudge(px / (innerHeight * 2.8));   // 30% less scrolling than the first version (dave, 2026-11-01)
+  nudge(px / (innerHeight * 1.82));   // shortened twice at dave's request: -30% (2026-11-01), then -35% (2026-11-02)
 }, { passive: false });
 let touchY = null;
 intro.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
@@ -322,14 +322,14 @@ intro.addEventListener('touchmove', e => {
   if (touchY === null) return;
   e.preventDefault();
   const y = e.touches[0].clientY;
-  nudge((touchY - y) / (innerHeight * 1.54)); touchY = y;
+  nudge((touchY - y) / innerHeight); touchY = y;
 }, { passive: false });
 intro.addEventListener('touchend', () => { touchY = null; });
 addEventListener('keydown', e => {
   if (!document.body.contains(stage)) return;
   const k = e.key;
-  if (k === 'ArrowDown' || k === 'PageDown' || k === ' ') { e.preventDefault(); nudge(.115); }
-  else if (k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); nudge(-.115); }
+  if (k === 'ArrowDown' || k === 'PageDown' || k === ' ') { e.preventDefault(); nudge(.177); }
+  else if (k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); nudge(-.177); }
 });
 
 /* ---------- framing ---------- */

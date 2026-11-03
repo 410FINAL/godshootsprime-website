@@ -320,6 +320,13 @@ body.uploading .toast { bottom: calc(220px + env(safe-area-inset-bottom, 0px)); 
 .state { padding: 4px 10px; border: 1px solid var(--dim); font-size: 10px; }
 .state.done { background: var(--white); color: var(--black); border-color: var(--white); }
 .inbox { display: inline-flex; align-items: center; gap: 8px; color: var(--white); }
+.inq { display: grid; gap: 12px; border-top: 1px solid var(--line); padding: 22px 0; }
+.inq-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 20px; flex-wrap: wrap; }
+.inq-head h3 { margin: 0; font: 400 24px/1.2 var(--display); }
+.inq dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; font-size: 14px; }
+.inq dt { color: var(--grey); }
+.inq dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.inq-acts { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
 .inbox::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--white); }
 .tag.hot { background: var(--white); color: var(--black); border-color: var(--white); }
 
@@ -361,6 +368,7 @@ body.uploading .toast { bottom: calc(220px + env(safe-area-inset-bottom, 0px)); 
   <div class="wrap">
     <a class="mark" href="#">GODSHOOTSPRIME<small>Admin</small></a>
     <div class="right">
+      <a class="label inbox" id="inq-badge" href="#inquiries" hidden></a>
       <a class="label inbox" id="inbox" href="#" hidden></a>
       <span class="label saved" id="saved" aria-live="polite"></span>
       <button class="label muted" type="button" id="sign-out" hidden>Sign out</button>
@@ -581,7 +589,7 @@ function enter() {
   /* Signed in, so the full settings (contract template included) are available now. */
   GS.getSettings().then(function (s) { S = s; }).then(checkActivity).then(route, route);
 }
-$("sign-out").addEventListener("click", function () { ss("gsp-admin", null); GS.signOut(); $("inbox").hidden = true; location.hash = ""; showGate(); });
+$("sign-out").addEventListener("click", function () { ss("gsp-admin", null); GS.signOut(); $("inbox").hidden = true; $("inq-badge").hidden = true; location.hash = ""; showGate(); });
 GS.onSignedOut = function () { ss("gsp-admin", null); GS.signOut(); showGate(); };
 
 /* ---------- Routing: #  = folders, #settings, #<client id> ---------- */
@@ -600,6 +608,7 @@ function route() {
   openFolder = null; dropTarget = null; uploads = null; document.body.classList.remove("uploading");
   scrollTo(0, 0);
   if (h === "settings") return renderSettings();
+  if (h === "inquiries") return renderInquiries();
   if (h) return GS.getClient(h).then(function (c) { c ? renderFolder(c) : (location.hash = ""); });
   renderHome();
 }
@@ -607,6 +616,7 @@ function route() {
 function pageTabs(active) {
   return '<div class="tabs" role="tablist">' +
     '<a class="tab" role="tab" href="#" aria-selected="' + (active === "home") + '">Client folders</a>' +
+    '<a class="tab" role="tab" href="#inquiries" aria-selected="' + (active === "inquiries") + '">Inquiries</a>' +
     '<a class="tab" role="tab" href="#settings" aria-selected="' + (active === "settings") + '">Site text &amp; settings</a></div>';
 }
 var PREVIEW_NOTE = '<p class="preview-note"><b>Preview mode.</b> Folders and photos are saved in this browser only, so clients on other devices won\'t see them yet. This switches to online storage once hosting is set up.</p>';
@@ -1420,6 +1430,53 @@ function renderFolder(c) {
 }
 
 /* ---------- Site text & settings ---------- */
+/* ---------- Inquiries sent from the main site's form ---------- */
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function renderInquiries() {
+  var app = $("app");
+  app.innerHTML = '<div class="wrap page">' +
+    '<div class="page-head"><h1>Inquiries</h1></div>' + pageTabs("inquiries") +
+    '<p class="sub" style="color:var(--grey);max-width:70ch">Every inquiry from the form on your site is kept here' +
+    (S.selectionEndpoint ? ", and also emailed to you through the Formspree link in Site text &amp; settings." : '. To get them by email too, add a Formspree link under Email notifications in <a class="link" href="#settings">Site text &amp; settings</a>.') +
+    '</p><div id="inq-list"><p class="empty">Loading…</p></div></div>';
+  GS.listInquiries().then(function (list) {
+    lsSet("gsp-inq-seen", String(Date.now())); paintInquiryBadge([]);
+    var box = $("inq-list");
+    if (!box) return;
+    if (!list.length) { box.innerHTML = '<p class="empty">No inquiries yet.' + (GS.mode === "remote" ? "" : " They're saved once the site is online.") + '</p>'; return; }
+    var skip = { _subject: 1, _replyto: 1, receivedAt: 1, id: 1, name: 1, email: 1, category: 1 };
+    box.replaceChildren.apply(box, list.map(function (q) {
+      var d = document.createElement("article"); d.className = "inq";
+      var rows = Object.keys(q).filter(function (k) { return !skip[k] && q[k] !== ""; });
+      d.innerHTML = '<div class="inq-head"><h3></h3><span class="label muted"></span></div><dl></dl><div class="inq-acts">' +
+        '<a class="btn small solid" data-reply>Reply by email</a><button class="link" type="button" data-copy>Copy</button>' +
+        '<button class="link danger" type="button" data-del>Delete</button></div>';
+      d.querySelector("h3").textContent = (q.name || "Someone") + (q.category ? " · " + q.category : "");
+      d.querySelector(".label").textContent = new Date(q.receivedAt).toLocaleString();
+      var dl = d.querySelector("dl");
+      [["Email", q.email]].concat(rows.map(function (k) { return [k.replace(/_/g, " ").replace(/^./, function (c) { return c.toUpperCase(); }), q[k]]; })).forEach(function (r) {
+        var dt = document.createElement("dt"), dd = document.createElement("dd");
+        dt.textContent = r[0]; dd.textContent = r[1]; dl.append(dt, dd);
+      });
+      d.querySelector("[data-reply]").href = "mailto:" + encodeURIComponent(q.email || "") + "?subject=" + encodeURIComponent("Your " + (q.category || "photography").toLowerCase() + " inquiry");
+      d.querySelector("[data-copy]").onclick = function () { copy(dl.innerText); };
+      d.querySelector("[data-del]").onclick = function () {
+        if (!confirm("Delete this inquiry?")) return;
+        GS.deleteInquiry(q.id).then(function () { d.remove(); toast("Inquiry deleted"); }, function (e) { toast(e.message); });
+      };
+      return d;
+    }));
+  }).catch(function (e) { var box = $("inq-list"); if (box) box.innerHTML = '<p class="empty">Couldn\'t load inquiries: ' + esc(e.message) + "</p>"; });
+}
+function paintInquiryBadge(times) {
+  var seen = +(lsGet("gsp-inq-seen") || 0), n = times.filter(function (t) { return t > seen; }).length;
+  if (!seen && times.length) n = times.length;
+  var b = $("inq-badge");
+  b.hidden = !n || !ss("gsp-admin");
+  b.textContent = plural(n, "new inquiry").replace("inquirys", "inquiries");
+}
+
 function renderSettings() {
   var app = $("app"), saveT;
   function persist() { clearTimeout(saveT); saveT = setTimeout(function () { GS.saveSettings(S).then(flashSaved); }, 350); }
@@ -1527,7 +1584,8 @@ function alertMe(title, body) {
   try { if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body: body }); } catch (e) {}
 }
 function checkActivity() {
-  return Promise.all([GS.allMessages(), GS.allContracts(), GS.listClients()]).then(function (r) {
+  return Promise.all([GS.allMessages(), GS.allContracts(), GS.allClientNames(), GS.allInquiries()]).then(function (r) {
+    paintInquiryBadge(r[3] || []);
     var msgs = r[0], ks = r[1], names = {};
     r[2].forEach(function (c) { names[c.id] = c.name; });
     var unread = {}, contracts = {}, total = 0, first = null;
@@ -1561,7 +1619,8 @@ function checkActivity() {
 }
 var lastCheck = 0;
 setInterval(function () {
-  if (!ss("gsp-admin") || Date.now() - lastCheck < Math.max(6000, GS.pollMs)) return;
+  /* Only while the admin is on screen, about once a minute online, to keep Backblaze requests low. */
+  if (!ss("gsp-admin") || document.hidden || Date.now() - lastCheck < (GS.mode === "remote" ? 60000 : 6000)) return;
   lastCheck = Date.now(); checkActivity().catch(function () {});
 }, 1000);
 
@@ -1571,6 +1630,10 @@ GS.getSettings().then(function (s) {
   S = s;
   var signedIn = ss("gsp-admin") && (GS.mode === "remote" ? GS.hasSession() : S.adminHash);
   if (signedIn) enter(); else showGate();
+}).catch(function (e) {
+  S = { adminHash: "server", text: GS.DEFAULT_TEXT, downloadDays: 14 };
+  showGate();
+  $("gate-error").textContent = "The portal server isn't answering: " + ((e && e.message) || "no connection") + ". Reload in a minute.";
 });
 </script>
 </body>

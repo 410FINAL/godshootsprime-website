@@ -5,6 +5,7 @@
      data/clients/<folder>.json                 one record per client or event
      data/contracts/<folder>/<id>.json          contracts (+ <id>.signed marker once signed)
      data/messages/<folder>/<time>-<from>-<id>.json
+     data/inquiries/<time>-<id>.json            inquiries from the main site's form
      photos/<folder>/<proofs|finals|downloads>/<file>      originals
      photos/<folder>/<section>/_t/<file>.jpg    900px preview, _v/ 2000px view (made at upload)
 
@@ -187,6 +188,59 @@ const ACTIONS = {
     const t = readToken(body.ticket);
     if (!t || t.role !== "chooser" || !t.ids.includes(body.id)) throw new HttpError(401, "Please sign in again.");
     return startSession(b, await getClient(b, body.id), "client");
+  },
+
+  /* ----- Inquiries from the main site (no sign-in). Saved here so none is lost even before
+     an email service is set up; the admin portal lists them under Inquiries. ----- */
+  async inquiry({ b, body }) {
+    const d = body.inquiry && typeof body.inquiry === "object" ? body.inquiry : null;
+    if (!d || body.website) return { ok: true }; // empty, or the hidden spam field was filled in
+    const clean = {};
+    Object.entries(d).slice(0, 40).forEach(([k, v]) => {
+      const key = String(k).slice(0, 60);
+      if (key) clean[key] = String(v == null ? "" : v).slice(0, 4000);
+    });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clean.email || "")) throw new HttpError(400, "Enter a valid email address.");
+    const at = Date.now();
+    await b.putJSON(`data/inquiries/${at}-${uid()}.json`, { ...clean, receivedAt: at });
+    /* Also email it through the Formspree link in the admin settings, if one is set. Best effort. */
+    const s = await settingsOf(b).catch(() => ({}));
+    if (s.selectionEndpoint && /^https:\/\/formspree\.io\//.test(s.selectionEndpoint)) {
+      await fetch(s.selectionEndpoint, {
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(clean)
+      }).catch(() => {});
+    }
+    return { ok: true, emailed: !!s.selectionEndpoint };
+  },
+  async listInquiries({ b, who }) {
+    admin(who);
+    const { keys } = await b.list("data/inquiries/");
+    const recent = keys.filter(k => k.key.endsWith(".json")).sort((x, y) => y.key.localeCompare(x.key)).slice(0, 200);
+    const docs = await Promise.all(recent.map(k => b.getJSON(k.key).then(d => d && { id: k.key.split("/").pop().replace(/\.json$/, ""), ...d })));
+    return docs.filter(Boolean);
+  },
+  async deleteInquiry({ b, body, who }) {
+    admin(who);
+    const id = String(body.id || "");
+    if (!/^\d{13}-[a-z0-9]+$/.test(id)) throw new HttpError(400, "Bad inquiry");
+    await b.del(`data/inquiries/${id}.json`);
+  },
+
+  /* ----- A light check for the client gallery: counts only, read from file names
+     (one listing each, no file downloads), so an open gallery costs Backblaze almost nothing. ----- */
+  async poll({ b, body, who }) {
+    const role = access(who, body.clientId);
+    if (role === "guest") return { messages: 0, contracts: 0, signed: 0, lastAt: 0 };
+    const id = folderOk(body.clientId);
+    const [msgs, ks] = await Promise.all([b.list(`data/messages/${id}/`), b.list(`data/contracts/${id}/`)]);
+    const metas = msgs.keys.map(k => parseMsgKey(k.key)).filter(Boolean);
+    return {
+      messages: metas.length,
+      lastAt: metas.reduce((m, x) => Math.max(m, x.at), 0),
+      contracts: ks.keys.filter(k => k.key.endsWith(".json")).length,
+      signed: ks.keys.filter(k => k.key.endsWith(".signed")).length
+    };
   },
 
   /* ----- Settings ----- */
@@ -385,7 +439,7 @@ const ACTIONS = {
   /* ----- Admin overview: unread messages and signatures without opening every file ----- */
   async activity({ b, who }) {
     admin(who);
-    const [clients, msgs, ks] = await Promise.all([allClients(b), b.list("data/messages/"), b.list("data/contracts/")]);
+    const [clients, msgs, ks, inq] = await Promise.all([allClients(b), b.list("data/messages/"), b.list("data/contracts/"), b.list("data/inquiries/")]);
     const byId = Object.fromEntries(clients.map(c => [c.id, c]));
     const messages = msgs.keys.map(k => parseMsgKey(k.key)).filter(m => m && byId[m.clientId])
       .map(m => ({ id: m.id, clientId: m.clientId, from: m.from, at: m.at, text: "", read: readFor(byId[m.clientId], m) }));
@@ -394,7 +448,8 @@ const ACTIONS = {
       const m = /^data\/contracts\/([^/]+)\/([^/]+)\.json$/.exec(k.key);
       return m && { id: m[2], clientId: m[1], title: "", status: signed.has(k.key.replace(/\.json$/, "")) ? "signed" : "sent" };
     }).filter(Boolean);
-    return { messages, contracts, clients: clients.map(c => ({ id: c.id, name: c.name })) };
+    const inquiries = inq.keys.map(k => +(/(\d{13})-[^/]+\.json$/.exec(k.key) || [])[1]).filter(Boolean);
+    return { messages, contracts, inquiries, clients: clients.map(c => ({ id: c.id, name: c.name })) };
   },
 
   /* ----- One-time setup: let the site upload to and zip from the portal bucket (CORS) ----- */

@@ -187,12 +187,22 @@
   /* ---------- First run: default settings and a demo client ---------- */
   var API = "/api/portal";
   /* LIVE when the portal function answers and has storage connected. */
-  var modeP = (location.protocol.indexOf("http") === 0
-    ? fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: '{"action":"ping"}' })
-        .then(function (r) { return r.ok ? r.json() : {}; })
-        .then(function (j) { return j && j.ok && j.ready ? "remote" : "local"; })
-        .catch(function () { return "local"; })
-    : Promise.resolve("local"));
+  /* On the real site it is always LIVE: a slow or failed first check (a cold start, a weak phone
+     signal) used to drop clients into the browser-only demo, where their password could never match. */
+  var LIVE_HOST = /(^|\.)godshootsprime\.com$|\.vercel\.app$/i.test(location.hostname);
+  function ping(tries) {
+    return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: '{"action":"ping"}' })
+      .then(function (r) {
+        if (r.status >= 500 && tries > 0) throw new Error("retry");
+        return r.ok ? r.json() : {};
+      })
+      .then(function (j) { return LIVE_HOST || (j && j.ok && j.ready) ? "remote" : "local"; })
+      .catch(function () {
+        if (tries > 0) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return ping(tries - 1); });
+        return LIVE_HOST ? "remote" : "local";
+      });
+  }
+  var modeP = location.protocol.indexOf("http") === 0 ? ping(2) : Promise.resolve("local");
 
   var ready = modeP.then(function (m) { if (m !== "local") return "skip"; return dbp.then(function () { return get("kv", "settings"); }); }).then(function (s) {
     if (s === "skip") return "skip";
@@ -324,6 +334,16 @@
     },
     chooseGallery: function (ticket, id) { return get("clients", id).then(function (c) { return { client: c }; }); },
     setupStorage: function () { return Promise.resolve({ ok: true }); },
+    poll: function (clientId) {
+      return Promise.all([this.listMessages(clientId), this.listContracts(clientId)]).then(function (r) {
+        return { messages: r[0].length, lastAt: r[0].reduce(function (m, x) { return Math.max(m, x.at); }, 0),
+          contracts: r[1].length, signed: r[1].filter(function (k) { return k.status === "signed"; }).length };
+      });
+    },
+    allClientNames: function () { return this.listClients(); },
+    allInquiries: function () { return Promise.resolve([]); },
+    listInquiries: function () { return Promise.resolve([]); },
+    deleteInquiry: function () { return Promise.resolve(); },
 
     /* ---------- Contracts ---------- */
     listContracts: function (clientId) {
@@ -408,7 +428,7 @@
       });
   }
   /* Last copy of each client the server sent, so saves send only what changed. */
-  var snap = {};
+  var snap = {}, saving = {};
   function remember(c) { if (c && c.id) snap[c.id] = JSON.parse(JSON.stringify(c)); return c; }
   function signedIn(r) { ssSet(tokKey(), r.token); return remember(r.client); }
   var contractOwner = {};
@@ -472,17 +492,23 @@
       });
     },
     getClient: function (id) { return api("getClient", { id: id }).then(remember).catch(function (e) { if (e.status === 404 || e.status === 403) return null; throw e; }); },
+    /* Saves go one at a time per folder, each sending what changed since the last one the server
+       confirmed. Quick taps used to send overlapping saves that could land out of order and undo a pick. */
     saveClient: function (c) {
-      var before = snap[c.id] || {}, changes = {}, n = 0;
-      Object.keys(c).forEach(function (k) {
-        if (JSON.stringify(c[k]) !== JSON.stringify(before[k])) { changes[k] = c[k]; n++; }
+      var job = (saving[c.id] || Promise.resolve()).catch(function () {}).then(function () {
+        var before = snap[c.id] || {}, changes = {}, n = 0;
+        Object.keys(c).forEach(function (k) {
+          if (JSON.stringify(c[k]) !== JSON.stringify(before[k])) { changes[k] = c[k]; n++; }
+        });
+        if (!n) return c;
+        return api("saveClient", { id: c.id, changes: changes }).then(function (saved) {
+          /* Keep the page's own copy; just record what the server now has. */
+          remember(saved);
+          return c;
+        });
       });
-      if (!n) return Promise.resolve(c);
-      return api("saveClient", { id: c.id, changes: changes }).then(function (saved) {
-        /* Keep the page's own copy; just record what the server now has. */
-        remember(saved);
-        return c;
-      });
+      saving[c.id] = job;
+      return job;
     },
     deleteClient: function (id) { return api("deleteClient", { id: id }); },
     findClient: function (password) {
@@ -550,7 +576,12 @@
     addMessage: function (clientId, from, text) { return api("addMessage", { clientId: clientId, text: text }); },
     markRead: function (clientId) { return api("markRead", { clientId: clientId }); },
     allMessages: function () { return activity().then(function (a) { return a.messages; }); },
-    setupStorage: function (keyId, key) { return api("setupStorage", { masterKeyId: keyId, masterKey: key }); }
+    setupStorage: function (keyId, key) { return api("setupStorage", { masterKeyId: keyId, masterKey: key }); },
+    poll: function (clientId) { return api("poll", { clientId: clientId }); },
+    allClientNames: function () { return activity().then(function (a) { return a.clients || []; }); },
+    allInquiries: function () { return activity().then(function (a) { return a.inquiries || []; }); },
+    listInquiries: function () { return api("listInquiries"); },
+    deleteInquiry: function (id) { return api("deleteInquiry", { id: id }); }
   };
 
   /* ---------- Public API: same calls in both modes ---------- */
@@ -559,7 +590,7 @@
     ready: ready, esc: esc, rich: rich, hash: hash, uid: uid, placeholder: placeholder, photoUrl: photoUrl,
     notify: local.notify, window: local.window, text: local.text, fillTemplate: local.fillTemplate,
     mode: "local",
-    modeReady: modeP.then(function (m) { GS.mode = m; GS.pollMs = m === "remote" ? 20000 : 5000; return m; }),
+    modeReady: modeP.then(function (m) { GS.mode = m; GS.pollMs = m === "remote" ? 45000 : 5000; return m; }),
     pollMs: 5000,
     /* Which saved sign-in to use on this page: "admin" or "client". */
     useRole: function (r) { role = r; },
@@ -569,7 +600,8 @@
   ["getSettings", "saveSettings", "adminLogin", "listClients", "getClient", "saveClient", "deleteClient",
    "findClient", "findShared", "googleLogin", "chooseGallery", "newClient", "listPhotos", "addPhoto",
    "deletePhoto", "photoBlob", "download", "listContracts", "saveContract", "deleteContract", "allContracts",
-   "listMessages", "addMessage", "markRead", "allMessages", "setupStorage"].forEach(function (name) {
+   "listMessages", "addMessage", "markRead", "allMessages", "setupStorage",
+   "poll", "allClientNames", "allInquiries", "listInquiries", "deleteInquiry"].forEach(function (name) {
     GS[name] = function () {
       var args = arguments;
       return modeP.then(function (m) {

@@ -581,7 +581,13 @@ function ls(key, val) {
 }
 function fmtDate(t) { return new Date(t).toLocaleDateString(undefined, { month: "long", day: "numeric" }); }
 function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
-function save() { if (!adminView) GS.saveClient(C); }
+function save() {
+  if (adminView) return Promise.resolve();
+  return GS.saveClient(C).catch(function (e) {
+    if (e.status !== 401) toast(e.message || "That didn't save. Check your connection and try again.");
+    throw e;
+  });
+}
 
 /* Grid photos load as they come near the screen and let go once far away, so a big gallery
    never holds hundreds of decoded photos at once (that is what crashes phones). */
@@ -635,26 +641,76 @@ function loadZip() {
   });
   return zipLib;
 }
+/* "Download all". A computer gets zip files (split into parts so a big gallery never has to sit in
+   memory at once). A phone can't hold a zip of full-size camera files: building one is what made
+   iPhones reload the page. There it hands the photos to the share sheet ten at a time, where
+   "Save Images" puts them straight into Photos. */
+var PHONE = matchMedia("(pointer: coarse)").matches;
+function canShareFiles() {
+  try { return !!(navigator.canShare && navigator.canShare({ files: [new File([""], "x.jpg", { type: "image/jpeg" })] })); } catch (e) { return false; }
+}
 function downloadAll(photos, zipName, btn) {
+  if (!photos.length) return;
+  if (PHONE && canShareFiles()) return shareAll(photos, btn);
+  var limit = PHONE ? 250e6 : 1500e6, parts = [[]], size = 0;
+  photos.forEach(function (p) {
+    var n = p.size || 20e6;
+    if (parts[parts.length - 1].length && size + n > limit) { parts.push([]); size = 0; }
+    parts[parts.length - 1].push(p); size += n;
+  });
   btn.disabled = true;
   var label = btn.textContent, done = 0;
   btn.textContent = "Preparing 0 / " + photos.length;
   loadZip().then(function (JSZip) {
-    var zip = new JSZip();
-    return photos.reduce(function (pr, p) {
+    return parts.reduce(function (pr, part, i) {
       return pr.then(function () {
-        return GS.photoBlob(p).then(function (b) {
-          zip.file(p.name, b, { binary: true });
-          btn.textContent = "Preparing " + (++done) + " / " + photos.length;
+        var zip = new JSZip();
+        return part.reduce(function (q, p) {
+          return q.then(function () {
+            return GS.photoBlob(p).then(function (b) {
+              zip.file(p.name, b, { binary: true });
+              btn.textContent = "Preparing " + (++done) + " / " + photos.length;
+            });
+          });
+        }, Promise.resolve()).then(function () { return zip.generateAsync({ type: "blob" }); }).then(function (blob) {
+          saveBlob(blob, parts.length > 1 ? zipName.replace(/\.zip$/, "-part-" + (i + 1) + ".zip") : zipName);
         });
       });
-    }, Promise.resolve()).then(function () { return zip.generateAsync({ type: "blob" }); });
-  }).then(function (blob) {
-    saveBlob(blob, zipName);
-    toast("Download started");
+    }, Promise.resolve());
+  }).then(function () {
+    toast(parts.length > 1 ? "Downloading in " + parts.length + " parts" : "Download started");
   }).catch(function () {
     toast("Couldn't build the zip. Save images one at a time instead.");
   }).then(function () { btn.disabled = false; btn.textContent = label; });
+}
+function shareAll(photos, btn) {
+  var label = btn.textContent, BATCH = 10, at = 0, ready = null;
+  function batchLabel() { return "Save " + (at + 1) + (ready.length > 1 ? "–" + (at + ready.length) : "") + " of " + photos.length; }
+  function prepare() {
+    var part = photos.slice(at, at + BATCH), got = [];
+    btn.disabled = true; btn.textContent = "Preparing " + (at + 1) + "–" + (at + part.length);
+    return part.reduce(function (q, p) {
+      return q.then(function () { return GS.photoBlob(p).then(function (b) { got.push(new File([b], p.name, { type: b.type || "image/jpeg" })); }); });
+    }, Promise.resolve()).then(function () {
+      ready = got; btn.disabled = false; btn.textContent = batchLabel();
+    });
+  }
+  function finish(msg) { ready = null; btn.onclick = null; btn.textContent = label; btn.disabled = false; btn._sharing = false; if (msg) toast(msg); }
+  btn._sharing = true;
+  /* The share sheet has to open straight from a tap, so each batch is: tap to prepare, tap to save. */
+  btn.onclick = function (e) {
+    e.stopImmediatePropagation();
+    if (!ready || btn.disabled) return;
+    navigator.share({ files: ready }).then(function () {
+      at += ready.length; ready = null;
+      if (at >= photos.length) return finish("All " + photos.length + " saved");
+      prepare().catch(function () { finish("That didn't work. Save images one at a time instead."); });
+    }, function (err) {
+      if (err && err.name === "AbortError") return; // closed the sheet: the same batch stays ready
+      finish("Couldn't open the share sheet. Save images one at a time instead.");
+    });
+  };
+  prepare().catch(function () { finish("That didn't work. Save images one at a time instead."); });
 }
 
 var toastTimer;
@@ -712,7 +768,7 @@ $("sign-out").addEventListener("click", function () {
 
 function openGallery(client) {
   C = client;
-  if (!C.firstLogin && !adminView) { C.firstLogin = Date.now(); save(); }
+  if (!C.firstLogin && !adminView) { C.firstLogin = Date.now(); save().catch(function () {}); }
   picks = (C.picks || []).slice();
   /* A guest's download count is kept per person, not shared across the event. */
   if (guest) { try { downloaded = JSON.parse(ls("gsp-dl-" + C.id) || "[]"); } catch (e) { downloaded = []; } }
@@ -725,9 +781,16 @@ function openGallery(client) {
     lists = { proofs: r[0], finals: r[1], downloads: r[2] };
     contracts = r[3]; messages = r[4];
     if (guest) lists.proofs = [];
+    loadedAt = Date.now();
     render();
+  }).catch(function (e) {
+    if (e && e.status === 401) return;   // session ended: the page signs out on its own
+    C = null;
+    showGate();
+    gateError("Your gallery didn't load. Check your connection and try again." + (e && e.message ? " (" + e.message + ")" : ""));
   });
 }
+var loadedAt = 0;
 
 function render() {
   var T = function (k) { return GS.text(C, S, k); };
@@ -877,7 +940,11 @@ function toggle(name) {
     if (C.pick && picks.length >= C.pick) { toast("You've chosen all " + C.pick + ". Unselect one to swap it."); return; }
     picks.push(name);
   }
-  C.picks = picks.slice(); save();
+  C.picks = picks.slice();
+  save().catch(function () {
+    /* Put the ticks back the way the server has them. */
+    GS.getClient(C.id).then(function (c) { if (c && C && c.id === C.id) { picks = (c.picks || []).slice(); C.picks = picks.slice(); paintPicks(); } });
+  });
   paintPicks();
 }
 function paintPicks() {
@@ -920,12 +987,21 @@ $("sheet-send").addEventListener("click", function () {
   var body = C.name + " · " + [C.shoot, C.date].filter(Boolean).join(" · ") + "\n\n" +
     picks.length + " frames selected:\n" + picks.join("\n") + (note ? "\n\nNotes:\n" + note : "");
   function done() {
-    C.selection = { frames: picks.slice(), note: note, sentAt: Date.now() }; save();
-    $("sheet").hidden = true; $("sheet-note").value = "";
-    toast("Selection sent. Thank you.");
+    C.selection = { frames: picks.slice(), note: note, sentAt: Date.now() };
+    return save().then(function () {
+      $("sheet").hidden = true; $("sheet-note").value = "";
+      toast("Selection sent. Thank you.");
+    });
   }
   if (adminView) { $("sheet").hidden = true; toast("Preview only: nothing was sent."); return; }
   if (!S.selectionEndpoint) {
+    /* Online, the selection is saved with the gallery and shows up in the admin portal. Only the
+       browser-only preview needs an email to carry it. */
+    if (GS.mode === "remote") {
+      btn.disabled = true; btn.textContent = "Sending";
+      done().catch(function () {}).then(function () { btn.disabled = false; btn.textContent = "Send"; });
+      return;
+    }
     done();
     location.href = "mailto:" + S.contactEmail + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
     return;
@@ -937,10 +1013,10 @@ $("sheet-send").addEventListener("click", function () {
     body: JSON.stringify({ _subject: subject, client: C.name, shoot: C.shoot, date: C.date, count: picks.length, frames: picks.join(", "), notes: note })
   }).then(function (r) {
     if (!r.ok) throw new Error();
-    done();
   }).catch(function () {
-    toast("That didn't send. Check your connection and try again.");
-  }).then(function () { btn.disabled = false; btn.textContent = "Send"; });
+    /* The email didn't go, but saving it with the gallery still gets it to the photographer online. */
+    if (GS.mode !== "remote") { toast("That didn't send. Check your connection and try again."); throw new Error("not sent"); }
+  }).then(done).catch(function () {}).then(function () { btn.disabled = false; btn.textContent = "Send"; });
 });
 
 /* ---------- Finals: open for a set number of days unless the timer is off ---------- */
@@ -964,7 +1040,7 @@ function buildFinals() {
       '<a class="link" href="mailto:' + GS.esc(S.contactEmail) + '?subject=' + encodeURIComponent("Reopen downloads: " + C.name) + '">Ask me to reopen it</a>';
   }
   if ($("all-finals")) $("all-finals").addEventListener("click", function () {
-    downloadAll(lists.finals, slug(C.name) + "-finals.zip", this);
+    if (!this._sharing) downloadAll(lists.finals, slug(C.name) + "-finals.zip", this);
   });
   lists.finals.forEach(function (p, i) {
     var a = document.createElement("button");
@@ -986,7 +1062,7 @@ function saveFile(p) {
   if (downloaded.indexOf(p.name) < 0 && C.downloadLimit) {
     downloaded.push(p.name);
     if (guest) ls("gsp-dl-" + C.id, JSON.stringify(downloaded));
-    else { C.downloaded = downloaded.slice(); save(); }
+    else { C.downloaded = downloaded.slice(); if (GS.mode !== "remote") save(); }
   }
   downloadOne(p);
   paintFiles();
@@ -1016,7 +1092,7 @@ function paintFiles() {
     nt.classList.remove("closed");
     nt.innerHTML = '<div><span class="label muted">Full resolution</span><br><b>' + lists.downloads.length + ' images</b></div>' +
       '<button class="btn solid" type="button" id="all-files">Download all</button>';
-    $("all-files").addEventListener("click", function () { downloadAll(lists.downloads, slug(C.name) + "-jpegs.zip", this); });
+    $("all-files").addEventListener("click", function () { if (!this._sharing) downloadAll(lists.downloads, slug(C.name) + "-jpegs.zip", this); });
   }
   document.querySelectorAll("#grid-files .act").forEach(function (a) {
     var got = downloaded.indexOf(a.dataset.name) > -1;
@@ -1103,13 +1179,25 @@ function signForm(k) {
     if (adminView) { toast("Preview only: nothing was signed."); return; }
     /* The signature is saved as a dark-on-transparent image so it prints cleanly. */
     var out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height;
-    var o = out.getContext("2d"); o.filter = "invert(1)"; o.drawImage(cv, 0, 0);
+    var o = out.getContext("2d"); o.drawImage(cv, 0, 0);
+    /* Dark ink, done pixel by pixel (Safari ignores canvas filters). */
+    var px = o.getImageData(0, 0, out.width, out.height), d = px.data;
+    for (var i = 0; i < d.length; i += 4) { d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2]; }
+    o.putImageData(px, 0, 0);
+    var btn = f.querySelector("button[type=submit]");
+    if (btn.disabled) return;
+    btn.disabled = true; btn.textContent = "Signing"; err.textContent = "";
+    var keep = { status: k.status, signedAt: k.signedAt, signature: k.signature };
     k.status = "signed"; k.signedAt = Date.now();
     k.signature = { name: name, image: out.toDataURL("image/png"), device: navigator.userAgent };
     GS.saveContract(k).then(function () {
       GS.notify(S, "Contract signed: " + C.name, { client: C.name, contract: k.title, signed_by: name, signed_at: new Date(k.signedAt).toString() });
       buildContracts();
       toast("Signed. Thank you.");
+    }).catch(function (e) {
+      Object.assign(k, keep);
+      btn.disabled = false; btn.textContent = "Sign agreement";
+      err.textContent = (e && e.message) || "That didn't go through. Check your connection and try again.";
     });
   });
   return f;
@@ -1146,6 +1234,9 @@ $("composer").addEventListener("submit", function (e) {
     messages.push(m); buildChat();
     $("composer").scrollIntoView({ block: "end" });
     GS.notify(S, "New message from " + C.name, { client: C.name, message: text });
+  }).catch(function (e) {
+    if (!ta.value) { ta.value = text; grow(); }
+    toast((e && e.message) || "Your message didn't send. Try again.");
   });
 });
 function grow() { var ta = $("msg"); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 200) + "px"; }
@@ -1153,26 +1244,37 @@ $("msg").addEventListener("input", grow);
 $("msg").addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey && matchMedia("(hover: hover)").matches) { e.preventDefault(); $("composer").requestSubmit(); }
 });
-/* Check for replies every few seconds. With a real backend this becomes a live subscription. */
-var lastPoll = 0;
+/* Check for replies while the gallery is on screen. The check reads only counts; the full
+   messages or agreements load only when something changed. Nothing runs while the tab is hidden. */
+var lastPoll = 0, polling = false;
 setInterval(function () {
-  if (!C || guest || Date.now() - lastPoll < GS.pollMs) return;
-  lastPoll = Date.now();
-  GS.listContracts(C.id).then(function (ks) {
-    if (ks.length === contracts.length) return;
-    var hadTab = contracts.length > 0, added = ks.length > contracts.length;
-    contracts = ks;
-    if (hadTab && ks.length) buildContracts(); else render();
-    if (added) toast("New agreement to sign");
-  });
-  GS.listMessages(C.id).then(function (l) {
-    if (l.length === messages.length) return;
-    var fresh = l.slice(messages.length).filter(function (m) { return m.from === "admin"; });
-    messages = l; buildChat();
-    if (fresh.length && current !== "messages") toast("New message");
-    if (current === "messages" && !adminView) GS.markRead(C.id, "client");
-  });
+  if (!C || guest || polling || document.hidden || Date.now() - lastPoll < GS.pollMs) return;
+  lastPoll = Date.now(); polling = true;
+  var id = C.id;
+  GS.poll(id).then(function (n) {
+    if (!C || C.id !== id) return;
+    var signed = contracts.filter(function (k) { return k.status === "signed"; }).length;
+    var jobs = [];
+    if (n.contracts !== contracts.length || n.signed !== signed) jobs.push(GS.listContracts(id).then(function (ks) {
+      var hadTab = contracts.length > 0, added = ks.length > contracts.length;
+      contracts = ks;
+      if (hadTab && ks.length) buildContracts(); else render();
+      if (added) toast("New agreement to sign");
+    }));
+    if (n.messages !== messages.length) jobs.push(GS.listMessages(id).then(function (l) {
+      var fresh = l.slice(messages.length).filter(function (m) { return m.from === "admin"; });
+      messages = l; buildChat();
+      if (fresh.length && current !== "messages") toast("New message");
+      if (current === "messages" && !adminView) GS.markRead(id, "client");
+    }));
+    return Promise.all(jobs);
+  }).catch(function () {}).then(function () { polling = false; });
 }, 1000);
+/* Photo links last a few hours. Coming back to a gallery left open longer than that reloads it,
+   so the photos don't turn into blank squares. */
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden && C && loadedAt && Date.now() - loadedAt > 5 * 36e5 && GS.mode === "remote") location.reload();
+});
 
 /* ---------- Lightbox ---------- */
 var lbSection = null, lbIndex = 0;
@@ -1305,7 +1407,12 @@ GS.getSettings().then(function (s) {
   }
   var id = ss("gsp-client");
   return (id ? GS.getClient(id).catch(function () { return null; }) : Promise.resolve(null))
-    .then(function (c) { if (c && c.password) openGallery(c); else showGate(); });
+    .then(function (c) { if (c) openGallery(c); else showGate(); });
+}).catch(function (e) {
+  /* The gallery server didn't answer: show the sign-in anyway, with a clear message, instead of a black page. */
+  S = S || { text: GS.DEFAULT_TEXT, contactEmail: "godshootsprime@gmail.com" };
+  showGate();
+  $("pw-error").textContent = "The gallery isn't answering right now. Check your connection, then reload the page." + (e && e.message ? " (" + e.message + ")" : "");
 });
 </script>
 </body>

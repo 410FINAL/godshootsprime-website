@@ -4,14 +4,13 @@ A single-page static site: black-first portfolio, a three-step "how booking work
 
 All settings are in the `SETTINGS` block at the top of the script in `index.html`.
 
-## Receiving inquiries (do this before going live)
+## Receiving inquiries
 
-1. Create a free account at https://formspree.io and make a new form.
-2. Copy its endpoint (looks like `https://formspree.io/f/abcdwxyz`).
-3. Paste it into `FORM_ENDPOINT` in `index.html`.
+Every inquiry from the form is saved in the portal bucket and listed in the admin portal under **Inquiries** (with a "new inquiry" badge at the top), so none are lost even before email is set up.
 
-Every inquiry then arrives in your inbox with the category, details, date, location, budget, notes, name, email, phone and whether they want updates. The client's email is set as reply-to, so you can reply straight to the email with your quote.
-While `FORM_ENDPOINT` is empty the form runs in preview mode: it shows the thank-you screen but sends nothing.
+To also get each one by email: create a free form at https://formspree.io (send it to godshootsprime@gmail.com) and paste its endpoint (looks like `https://formspree.io/f/abcdwxyz`) into **Email notifications** in the admin's Site text & settings. That one link emails you inquiries, client messages, signatures and selections. You can optionally also paste it into `FORM_ENDPOINT` in `index.html` to send a copy straight from the browser.
+
+Inquiries include the category, details, date, location, budget, notes, name, email, phone and whether they want updates. Use "Reply by email" in the admin to answer with your quote.
 
 Budget ranges are in `CURRENCY_BUDGETS` if you want a different currency or ranges.
 
@@ -30,7 +29,7 @@ Edit `CONTACT` (email and Instagram shown in the footer).
 
 ## Client galleries (client.html + admin.html)
 
-Clients sign in at `client.html` with their folder's password. Each folder has three sections: **Select** (proofs they tick and send back), **Finals** (edited images) and **Downloads** (JPEGs). The main site links to it as "Clients" and "Client login".
+Clients sign in at `client.html` with their folder's password (or Google, once set up). On a phone, "Download all" opens the share sheet ten photos at a time (Save Images puts them in Photos) instead of building one huge zip, which crashed iPhones. Each folder has three sections: **Select** (proofs they tick and send back), **Finals** (edited images) and **Downloads** (JPEGs). The main site links to it as "Clients" and "Client login".
 
 You manage everything at `admin.html` (also linked as "Photographer sign-in" under the client sign-in). The first visit asks you to set an admin password. From there you can:
 - Make a folder per client or event, set its password, shoot details and date.

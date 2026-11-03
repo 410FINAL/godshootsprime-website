@@ -47,6 +47,11 @@ export default async function handler(req, res) {
   /* Resized copies are also saved in the bucket (_web/...), because Vercel's cache is emptied on
      every deploy; without this each deploy re-downloaded every ~20 MB original to resize it again. */
   const saved = priv ? null : `_web/${(url.searchParams.get("v") || "0").replace(/[^a-z0-9]/gi, "")}/${width}/${key}.jpg`;
+  /* A client photo whose small copies weren't made at upload: save the result as its preview
+     (_t for the grid, _v for the viewer), so the portal links straight to it from then on and
+     the ~20 MB original is only resized once. */
+  const pm = priv && /^(photos\/[^/]+\/(?:proofs|finals|downloads)\/)([^/]+)$/.exec(key);
+  const preview = pm ? `${pm[1]}${width <= 1200 ? "_t" : "_v"}/${pm[2]}.jpg` : null;
   if (saved) {
     try {
       const obj = await b.s3.send(new GetObjectCommand({ Bucket: b.name, Key: saved }));
@@ -83,6 +88,10 @@ export default async function handler(req, res) {
       /* Best effort: if the key can't write, the photo still shows, it just isn't saved. */
       await b.s3.send(new PutObjectCommand({ Bucket: b.name, Key: saved, Body: out, ContentType: "image/jpeg" }))
         .catch(e => console.error("couldn't save resized copy", saved, e.name, e.message));
+    }
+    if (preview) {
+      await b.s3.send(new PutObjectCommand({ Bucket: b.name, Key: preview, Body: out, ContentType: "image/jpeg" }))
+        .catch(e => console.error("couldn't save preview", preview, e.name, e.message));
     }
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/jpeg");

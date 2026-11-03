@@ -616,7 +616,7 @@ var CURRENCY_BUDGETS = ["Under $1,000", "$1,000 to $2,500", "$2,500 to $5,000", 
 
 /* Your photos. Drop files into images/<category>/ and list them here.
    Any photo that can't be found shows a placeholder until you add it. */
-var HERO = { src: "images/hero.jpg", caption: "Fashion, Look 01", cat: "fashion" };
+var HERO = { src: location.protocol.indexOf("http") === 0 ? "" : "images/hero.jpg", caption: "", cat: "fashion" };
 
 var GALLERIES = {
   events: {
@@ -1146,13 +1146,20 @@ function submit() {
   sending = true;
   var btn = $("flow-next"); btn.disabled = true; btn.textContent = "Sending";
   var finish = function () { sending = false; done = true; try { localStorage.removeItem("gsp-inquiry"); } catch (e) {} renderStep(); };
-  if (!FORM_ENDPOINT) { setTimeout(finish, 700); return; }
-  fetch(FORM_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify(payload())
-  }).then(function (res) {
-    if (!res.ok) throw new Error(res.status);
+  var data = payload(), live = location.protocol.indexOf("http") === 0;
+  if (!FORM_ENDPOINT && !live) { setTimeout(finish, 700); return; }
+  /* Every inquiry is saved in the admin portal (Inquiries), which also emails it through the
+     Formspree link in its settings. FORM_ENDPOINT, if set, sends a copy straight from here too.
+     It counts as sent if either one got it. */
+  var post = function (url, body) {
+    return fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(body) })
+      .then(function (res) { if (!res.ok) throw new Error(res.status); return true; });
+  };
+  var jobs = [];
+  if (live) jobs.push(post("/api/portal", { action: "inquiry", inquiry: data }).catch(function () { return false; }));
+  if (FORM_ENDPOINT) jobs.push(post(FORM_ENDPOINT, data).catch(function () { return false; }));
+  Promise.all(jobs).then(function (r) {
+    if (r.indexOf(true) < 0) throw new Error("not sent");
     finish();
   }).catch(function () {
     sending = false; btn.disabled = false; btn.textContent = "Send my inquiry";

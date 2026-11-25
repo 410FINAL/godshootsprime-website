@@ -15,12 +15,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&display=swap">
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-} }
-</script>
 <style>
 /* Layout: black gallery walls. One hero frame, a tabbed portfolio, a three-step process, and a full-screen inquiry that asks one thing at a time. */
 :root {
@@ -323,25 +317,23 @@ input[type="date"].text { color-scheme: dark; }
   transition: opacity 1.8s ease;
 }
 .intro.out { opacity: 0; pointer-events: none; }
-/* The camera (R6 Mark II + EF 50 f/1.2L) comes apart and snaps back together, drawn by intro-camera.js; then the site slowly fades in. */
-.intro { overflow: hidden; padding: 0; }
-.intro-cam { position: absolute; inset: 0; opacity: 0; transition: opacity .9s var(--ease); }
-.intro-cam.ready { opacity: 1; }
-.intro-cam canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.intro-cam svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.intro-cam svg line { stroke: rgba(244,244,244,.38); stroke-width: 1; }
-.intro-cam svg circle { fill: var(--ink); }
-.intro-cam .tag { position: absolute; left: 0; top: 0; font: 500 10px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--grey); white-space: nowrap; opacity: 0; transition: opacity .35s; }
-.intro-grid { position: absolute; inset: 0; pointer-events: none; opacity: .5;
-  background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px;
-  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 85%); }
-.intro-brand { position: absolute; top: 28px; left: var(--gutter); font: 500 11px/1 var(--sans); letter-spacing: .34em; text-transform: uppercase; }
-.intro-load { position: absolute; left: 50%; bottom: max(40px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(320px, 70vw); pointer-events: none; }
-.intro-load .track { height: 1px; background: #2a2a2a; margin-bottom: 12px; overflow: hidden; }
-.intro-load .meta span { transition: opacity .5s; }
-.intro-load .track i { display: block; height: 100%; width: 0; background: var(--ink); }
-.intro-load .meta { display: flex; justify-content: center; font: 500 10px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--grey); font-variant-numeric: tabular-nums; }
-@media (max-width: 860px) { .intro-cam .tag { font-size: 8.5px; letter-spacing: .1em; } .intro-load { bottom: 64px; } }
+/* GODSHOOTSPRIME stacked five times: each line rises in, the middle one solid, the rest outlined; then two choices, Portfolio (fades into the site) or Print Archive (/prints). */
+.intro-words { display: grid; gap: .08em; text-align: center; font: 600 clamp(18px, 6.6vw, 96px)/.92 var(--sans); font-stretch: 125%; letter-spacing: -.01em; text-transform: uppercase; white-space: nowrap; }
+.intro-words span { display: block; opacity: 0; transform: translateY(.35em); color: transparent; -webkit-text-stroke: 1px rgba(244,244,244,.42); animation: introWord .9s var(--ease) forwards; }
+.intro-words span.solid { color: var(--ink); -webkit-text-stroke: 0; }
+.intro-words span:nth-child(1) { animation-delay: .15s; }
+.intro-words span:nth-child(2) { animation-delay: .35s; }
+.intro-words span:nth-child(3) { animation-delay: .55s; }
+.intro-words span:nth-child(4) { animation-delay: .75s; }
+.intro-words span:nth-child(5) { animation-delay: .95s; }
+@keyframes introWord { to { opacity: 1; transform: none; } }
+.intro-inner { display: grid; justify-items: center; gap: clamp(36px, 6vh, 64px); }
+.intro-choose { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; opacity: 0; transform: translateY(10px); animation: introWord 1s var(--ease) 1.5s forwards; }
+.intro-choose a { min-width: 200px; padding: 17px 26px; border: 1px solid var(--ink); text-align: center; text-decoration: none; color: var(--ink); font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase; transition: background .35s var(--ease), color .35s var(--ease); }
+.intro-choose a.primary, .intro-choose a:hover { background: var(--ink); color: var(--black); }
+.intro-choose a.primary:hover { background: transparent; color: var(--ink); }
+@media (max-width: 520px) { .intro-choose { flex-direction: column; width: min(300px, 80vw); } .intro-choose a { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .intro-choose { animation: none; opacity: 1; transform: none; } .intro-words span { animation: none; opacity: 1; transform: none; } }
 body.opening { overflow: hidden; }
 body.revealed .hero-text > *, body.revealed .hero-frame { animation: rise 1s var(--ease) both; }
 body.revealed .hero-frame { animation-delay: .15s; }
@@ -468,11 +460,11 @@ body.revealed .hero-text > :nth-child(4) { animation-delay: .3s; }
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
-<div class="intro" id="intro" role="presentation">
-  <div class="intro-grid"></div>
-  <div class="intro-cam" id="introCam"><svg id="introLeaders"></svg><div id="introTags"></div></div>
-  <span class="intro-brand">Godshootsprime</span>
-  <div class="intro-load"><div class="track"><i id="introBar"></i></div><div class="meta"><span id="introNow">Scroll</span></div></div>
+<div class="intro" id="intro" role="dialog" aria-label="GODSHOOTSPRIME">
+  <div class="intro-inner">
+  <div class="intro-words" aria-hidden="true"><span>Godshootsprime</span><span>Godshootsprime</span><span class="solid">Godshootsprime</span><span>Godshootsprime</span><span>Godshootsprime</span></div>
+  <nav class="intro-choose"><a href="#top" class="primary" id="introPortfolio">Portfolio</a><a href="/prints" id="introPrints">Print Archive</a></nav>
+  </div>
 </div>
 
 <header class="bar" id="bar">
@@ -656,7 +648,7 @@ var GALLERIES = {
   },
   fashion: {
     title: "Fashion",
-    line: "Editorial, lookbook and campaign work. Hard light, clean lines, the garment first.",
+    line: "Editorial, event and campaign work. Hard light, clean lines, the garment first.",
     photos: [
       { src: "images/fashion/01.jpg", caption: "Look 01" },
       { src: "images/fashion/02.jpg", caption: "Look 02" },
@@ -961,7 +953,7 @@ $("lb-next").addEventListener("click", function () { stepLb(1); });
 var TYPES = {
   events: "Galas, launches, parties, corporate",
   couples: "Engagements, weddings, elopements",
-  fashion: "Editorial, lookbook, campaign",
+  fashion: "Editorial, event, campaign",
   boudoir: "Private, intimate portraiture"
 };
 var DETAILS = {
@@ -986,8 +978,7 @@ var DETAILS = {
     title: "What's the <em>project?</em>",
     help: "Usage affects licensing, so let me know where the images will run.",
     fields: [
-      { id: "purpose", label: "Project", options: ["Editorial", "Lookbook", "Campaign", "Model portfolio"] },
-      { id: "looks", label: "Number of looks", options: ["1 to 5", "6 to 10", "11 to 20", "20+"] },
+      { id: "purpose", label: "Project", options: ["Editorial", "Event", "Campaign / Marketing", "Model portfolio"] },
       { id: "usage", label: "Where the images will run", options: ["Portfolio", "Social", "Commercial or print"] }
     ]
   },
@@ -1052,10 +1043,9 @@ function renderStep() {
     h += head(GALLERIES[A.type].title, d.title, d.help);
     d.fields.forEach(function (f) { h += chipGroup(f.id, f.label, f.options, A.details[f.id]); });
   } else if (id === "when") {
-    h += head("Date and place", "When and <em>where?</em>", "I'm booking in New York for now. If the date isn't set yet, tick flexible.");
+    h += head("Timing", "When is <em>the shoot?</em>", "I'm booking in New York for now. If the date isn't set yet, tick flexible.");
     h += '<div class="inputs">' +
       textField("date", "Date", "date", A.date) +
-      textField("location", "Venue or neighborhood in New York (optional)", "text", A.location, 'placeholder="e.g. DUMBO, Brooklyn"') +
       '<label class="check full"><input type="checkbox" id="f-flexible" name="flexible"' + (A.flexible ? " checked" : "") + '> My date is flexible</label>' +
       '</div>';
   } else if (id === "budget") {
@@ -1109,7 +1099,7 @@ function collect() {
   }
   save();
 }
-/* New York is the only location for now; the field adds the venue or neighborhood. */
+/* New York is the only location for now (no venue field since 2026-11-25). */
 function placeText() { return A.location ? "New York · " + A.location : "New York"; }
 function validate() {
   var id = STEPS[step];
@@ -1224,7 +1214,7 @@ document.addEventListener("keydown", function (e) {
   } else if (!flow.hidden && e.key === "Escape") closeFlow();
 });
 
-/* ---------- Opening: the camera comes apart and back together (intro-camera.js) ---------- */
+/* ---------- Opening: GODSHOOTSPRIME a few times, then Portfolio / Print Archive ---------- */
 var intro = $("intro"), introDone = false;
 function finishIntro(instant) {
   if (introDone) return;
@@ -1241,14 +1231,10 @@ function finishIntro(instant) {
   try { seen = !!sessionStorage.getItem("gsp-intro"); } catch (e) {}
   if (seen || location.hash === "#inquire") { finishIntro(true); return; }
   document.body.classList.add("opening");
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { setTimeout(function () { finishIntro(false); }, 1200); return; }
-  window.gspIntroDone = function () { finishIntro(false); };
-  /* If the 3D model can't load (old browser, no WebGL, slow network), don't hold people on a black screen. */
-  var started = false;
-  var giveUp = setTimeout(function () { if (!started) finishIntro(false); }, 6000);
-  import("./intro-camera.js").then(function () { started = true; clearTimeout(giveUp); })
-    .catch(function () { finishIntro(false); });
-  addEventListener("keydown", function (e) { if (!introDone && (e.key === "Escape" || e.key === "Enter")) finishIntro(false); });
+  /* No timer: the visitor picks Portfolio (this site) or Print Archive (/prints). */
+  $("introPortfolio").addEventListener("click", function (e) { e.preventDefault(); finishIntro(false); });
+  $("introPrints").addEventListener("click", function () { try { sessionStorage.setItem("gsp-intro", "1"); } catch (e) {} });
+  addEventListener("keydown", function (e) { if (!introDone && e.key === "Escape") finishIntro(false); });
 })();
 
 /* ---------- Phone tab bar ---------- */

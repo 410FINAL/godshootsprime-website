@@ -1501,6 +1501,7 @@ function renderSettings() {
       '<label class="field"><span class="label">Default days to download</span><input class="text num" id="s-days" inputmode="numeric" value="' + S.downloadDays + '"></label>' +
       '<label class="field"><span class="label">Your email</span><input class="text" id="s-email" type="email" value="' + esc(S.contactEmail) + '"><small>Where selections go when no form endpoint is set.</small></label>' +
       '<label class="field"><span class="label">Email notifications (Formspree endpoint)</span><input class="text" id="s-end" value="' + esc(S.selectionEndpoint) + '" placeholder="https://formspree.io/f/..."><small>Paste a Formspree endpoint and you\'ll get an email whenever a client messages you, signs a contract or sends a selection.</small></label>' +
+      '<label class="field"><span class="label">Print Archive sign-ups (Google Sheet link)</span><input class="text" id="s-sheet" value="' + esc(S.printSheetEndpoint || "") + '" placeholder="https://script.google.com/macros/s/.../exec"><small>Emails left on the Print Archive \'coming soon\' page are added to your Google Sheet through this link. Setup steps are in README.md under Print Archive sign-ups.</small></label>' +
       '<div class="field"><span class="label">Desktop alerts</span><small>Pop-up alerts on this computer for new messages and signatures while the admin portal is open.</small>' +
         '<button class="btn small" type="button" id="s-alerts" style="justify-self:start"></button></div>' +
     '</section>' +
@@ -1546,6 +1547,7 @@ function renderSettings() {
   });
   $("s-email").addEventListener("input", function () { S.contactEmail = this.value.trim(); persist(); });
   $("s-end").addEventListener("input", function () { S.selectionEndpoint = this.value.trim(); persist(); });
+  $("s-sheet").addEventListener("input", function () { S.printSheetEndpoint = this.value.trim(); persist(); });
   $("s-tpl").value = S.contractTemplate || "";
   $("s-tpl").addEventListener("input", function () { S.contractTemplate = this.value; persist(); });
   function paintAlerts() {

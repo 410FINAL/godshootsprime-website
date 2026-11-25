@@ -213,6 +213,23 @@ const ACTIONS = {
     }
     return { ok: true, emailed: !!s.selectionEndpoint };
   },
+  /* ----- Print Archive "coming soon" sign-ups (no sign-in). Kept in the bucket as a backup and
+     sent to dave's Google Sheet through the Apps Script link in Site text & settings. ----- */
+  async printSignup({ b, body }) {
+    if (body.website) return { ok: true }; // the hidden spam field was filled in
+    const email = String(body.email || "").trim().slice(0, 200);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new HttpError(400, "Enter a valid email address.");
+    const row = { email, name: String(body.name || "").trim().slice(0, 120), source: "Print Archive", at: new Date().toISOString() };
+    await b.putJSON(`data/print-list/${Date.now()}-${uid()}.json`, row);
+    const s = await settingsOf(b).catch(() => ({}));
+    if (s.printSheetEndpoint && /^https:\/\/script\.google\.com\/macros\/s\//.test(s.printSheetEndpoint)) {
+      await fetch(s.printSheetEndpoint, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(row),
+        signal: AbortSignal.timeout(8000)
+      }).catch(e => console.error("sheet", e));
+    }
+    return { ok: true };
+  },
   async listInquiries({ b, who }) {
     admin(who);
     const { keys } = await b.list("data/inquiries/");

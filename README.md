@@ -23,6 +23,26 @@ Once Backblaze is connected (see "Going live"), the site loads your portfolio st
 - Change captions or add more photos in the `GALLERIES` list. Any photo that can't be found shows a grey placeholder.
 - Export around 2400px on the long edge, JPEG quality ~80.
 
+## Print Archive sign-ups (prints/index.html)
+
+The Print Archive isn't open yet. `/prints` is a "coming soon" page that collects emails. Every sign-up is saved in the portal bucket (`data/print-list/`) as a backup, and added to a Google Sheet once it's linked:
+
+1. Make a new Google Sheet (e.g. "Print Archive list"). In row 1 type: `Date`, `Email`, `Name`, `Source`.
+2. **Extensions → Apps Script**. Replace everything there with:
+
+   ```js
+   function doPost(e) {
+     var d = JSON.parse(e.postData.contents);
+     SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]
+       .appendRow([new Date(d.at || Date.now()), d.email, d.name || "", d.source || ""]);
+     return ContentService.createTextOutput("ok");
+   }
+   ```
+3. **Deploy → New deployment →** type **Web app**. Execute as **Me**, Who has access **Anyone**. Deploy, allow access, and copy the **Web app URL** (ends in `/exec`).
+4. Paste it into the admin portal: **Site text & settings → Print Archive sign-ups (Google Sheet link)**.
+
+The finished gallery version of the archive (not live) is kept outside the site folder, in `print-archive-draft/`.
+
 ## Contact details
 
 Edit `CONTACT` (email and Instagram shown in the footer).

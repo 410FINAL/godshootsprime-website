@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K68F83V8');</script>
+<!-- End Google Tag Manager -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Print Archive · GODSHOOTSPRIME</title>
+<meta name="description" content="The GODSHOOTSPRIME print archive is coming soon. Leave your email to hear first when it opens.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..600&display=swap">
+<style>
+/* Print Archive, coming soon: one line, one email field. Same palette, type and top bar as the main site. */
+:root {
+  --black: #000000; --ink: #f4f4f4; --grey: #8e8e8e; --dim: #5c5c5c;
+  --line: #222222; --white: #ffffff;
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --gutter: clamp(16px, 5vw, 72px);
+  --ease: cubic-bezier(.22, .61, .2, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--black); color-scheme: dark; -webkit-text-size-adjust: 100%; }
+body { background: var(--black); color: var(--ink); font: 400 15px/1.6 var(--sans); min-height: 100vh; min-height: 100svh; display: grid; grid-template-rows: 1fr auto; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; color: inherit; }
+.label { font: 500 11px/1.4 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase; }
+.muted { color: var(--grey); }
+.wrap { padding-inline: var(--gutter); max-width: 1440px; margin-inline: auto; width: 100%; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 52px; padding: 0 28px; border: 1px solid var(--ink); background: none; cursor: pointer;
+  font: 500 11px/1 var(--sans); font-stretch: 115%; letter-spacing: .24em; text-transform: uppercase;
+  transition: background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease), transform .2s;
+}
+.btn.solid { background: var(--white); color: var(--black); border-color: var(--white); }
+.btn:active { transform: scale(.97); }
+.btn[disabled] { opacity: .5; cursor: progress; }
+@media (hover: hover) {
+  .btn:hover { background: var(--white); color: var(--black); border-color: var(--white); }
+  .btn.solid:hover { background: transparent; color: var(--white); }
+}
+
+/* Top bar */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(0, 0, 0, .82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.bar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+.mark { font: 500 12px/1 var(--sans); font-stretch: 125%; letter-spacing: .38em; white-space: nowrap; }
+.bar nav { display: flex; align-items: center; gap: clamp(20px, 3vw, 40px); }
+.bar nav a.navlink { color: var(--grey); transition: color .3s; }
+@media (hover: hover) { .bar nav a.navlink:hover { color: var(--white); } }
+.bar .btn { min-height: 40px; padding: 0 20px; }
+.bar .btn.portal { border-color: var(--dim); color: var(--grey); }
+@media (hover: hover) { .bar .btn.portal:hover { border-color: var(--white); color: var(--black); } }
+
+/* The page */
+main { display: grid; align-content: center; padding-block: calc(72px + clamp(48px, 8vw, 110px)) clamp(64px, 9vw, 120px); }
+.soon { display: grid; gap: clamp(28px, 4vw, 44px); max-width: 980px; }
+.soon h1 { font: 400 clamp(56px, 11vw, 168px)/.92 var(--display); letter-spacing: -.015em; }
+.soon h1 em { font-style: italic; }
+.soon p { max-width: 480px; color: var(--grey); font-size: 16px; }
+.rise { opacity: 0; transform: translateY(14px); animation: rise 1.1s var(--ease) forwards; }
+.rise:nth-child(2) { animation-delay: .12s; } .rise:nth-child(3) { animation-delay: .24s; } .rise:nth-child(4) { animation-delay: .36s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+form { display: grid; gap: 14px; max-width: 560px; }
+.row { display: flex; border-bottom: 1px solid var(--dim); transition: border-color .3s; }
+.row:focus-within { border-color: var(--white); }
+.row input {
+  flex: 1; min-width: 0; background: none; border: 0; outline: 0; padding: 18px 0;
+  font: 400 clamp(18px, 2.2vw, 22px)/1.2 var(--display); color: var(--ink);
+}
+.row input::placeholder { color: var(--dim); font-style: italic; }
+.row .btn { border: 0; min-height: auto; padding: 0 0 0 20px; }
+@media (hover: hover) { .row .btn:hover { background: none; color: var(--white); } }
+.row .btn span { display: inline-block; transition: transform .3s var(--ease); }
+@media (hover: hover) { .row .btn:hover span { transform: translateX(4px); } }
+.note { color: var(--dim); min-height: 1.4em; }
+.note.err { color: var(--ink); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.done { display: none; gap: 10px; }
+.done h2 { font: italic 400 clamp(26px, 3.4vw, 38px)/1.15 var(--display); }
+.sent form { display: none; }
+.sent .done { display: grid; animation: rise .9s var(--ease) forwards; }
+.back { justify-self: start; }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap; padding-block: 28px calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--grey); }
+footer .contact { display: flex; gap: 12px 32px; flex-wrap: wrap; }
+footer .contact span { user-select: all; }
+
+@media (max-width: 720px) {
+  .bar .wrap { height: 60px; }
+  .mark { font-size: 11px; letter-spacing: .3em; }
+  .bar nav { gap: 16px; }
+  .bar nav .hide-sm { display: none; }
+  .bar .btn { white-space: nowrap; }
+  .bar .btn.portal { min-height: 32px; padding: 0 12px; font-size: 10px; letter-spacing: .2em; }
+  main { padding-top: calc(60px + 48px); }
+}
+@media (max-width: 480px) { .bar .btn.portal { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } .rise { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K68F83V8"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header class="bar">
+  <div class="wrap">
+    <a class="mark" href="/">GODSHOOTSPRIME</a>
+    <nav aria-label="Main">
+      <a class="navlink label" href="/#work">Portfolio</a>
+      <a class="btn hide-sm" href="/#inquire">Inquire</a>
+      <a class="btn portal" href="/client.html">Client Portal</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="soon" id="soon">
+    <span class="label muted rise">Print Archive · Coming soon</span>
+    <h1 class="rise">Print <em>Archive</em></h1>
+    <p class="rise">A small archive of photographs, made to be printed and kept, is in the works. Leave your email and you'll be the first to know when it opens.</p>
+    <div class="rise">
+      <form id="form" novalidate>
+        <div class="row">
+          <input id="email" aria-label="Email" type="email" name="email" autocomplete="email" inputmode="email" placeholder="Your email" required>
+          <button class="btn" type="submit" id="go">Notify me <span aria-hidden="true">→</span></button>
+        </div>
+        <input class="hp" type="text" name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <span class="note label" id="note" role="status">No spam. One email when it opens.</span>
+      </form>
+      <div class="done" id="done" role="status">
+        <h2>You're on the list.</h2>
+        <p>You'll hear from me when the archive opens.</p>
+        <a class="btn back" href="/#work" style="margin-top:18px">See the portfolio</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap label">
+    <span>© 2026 GODSHOOTSPRIME</span>
+    <a href="/client.html">Client Portal</a>
+    <div class="contact"><span>Godshootsprime@gmail.com</span><span>@godshootsprime</span></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var form = document.getElementById("form"), email = document.getElementById("email"),
+      note = document.getElementById("note"), go = document.getElementById("go"), soon = document.getElementById("soon");
+  var hint = note.textContent;
+  function say(t, err) { note.textContent = t; note.classList.toggle("err", !!err); }
+  email.addEventListener("input", function () { if (note.classList.contains("err")) say(hint); });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { say("Enter a valid email address.", true); email.focus(); return; }
+    go.disabled = true; say("Adding you…");
+    fetch("/api/portal", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "printSignup", email: v, website: document.getElementById("website").value })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ""); });
+    }).then(function () {
+      soon.classList.add("sent");
+      (window.dataLayer = window.dataLayer || []).push({ event: "print_archive_signup" });
+    }).catch(function (err) {
+      say((err && err.message) || "That didn't go through. Check your connection and try again.", true);
+    }).then(function () { go.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
